@@ -2,8 +2,15 @@
 
 Unity simulation environment for AGH Space Systems robotics projects.
 
-## Giant Frame Time Spikes Every Few Seconds
+## Prerequisites
 
-RealSense cameras have to send massive amounts of data over rosbridge. Since rosbridge does not support fragmentation (it simply crashes), Unity sends each frame as a single message. This results in large allocations within the Websockets library and subsequently Garbage Collector has a lot of work to do.
-Workaround: Disable RealSense cameras or decrease their resolution (or framerate).
-Solution: Find a way to enable fragmentation in rosbridge.
+This software must be installed on the host computer for the simulation to run:
+
+- CMake
+- C++ 20 compiler
+
+Those requirements are imposed because Unity needs a custom native plugin that will get compiled on the first Colcon build.
+
+## How RealSense Cameras are Simulated
+
+In Unity each RealSense is a prefab composed of a single `GameObject` that contains a camera and the control script. The script renders the camera at a set rate and applies a shader that embeds the depth information in the alpha channel of the image. When a frame is available, it is read by the script onto the CPU, and from there [native C++ code](./realsense-native-plugin/) in invoked that sends the binary buffer over a custom WebSocket to the `realsense_bridge` node. The node generates point clouds, camera information and finally communicates with ROS network in order to publish the messages.

@@ -1,4 +1,5 @@
 import os
+import shutil
 import rclpy
 import rclpy.node
 import subprocess
@@ -23,11 +24,38 @@ class UnitySim(rclpy.node.Node):
         self.declare_parameter('scene', 'URC')
 
         # Find paths.
-        with open(ament_index_python.packages.get_package_share_directory('unity_sim') + "/src-root") as f:
+        with open(ament_index_python.packages.get_package_share_directory('unity_sim') + "/unity-project-dir") as f:
             project_dir = f.read()
         # (Either Distrobox host home or just $HOME without Distrobox.)
         running_in_distrobox = "DISTROBOX_HOST_HOME" in os.environ
         home = os.environ.get("DISTROBOX_HOST_HOME") if running_in_distrobox else os.environ.get("HOME")
+
+        # Check if Native Plugin is installed and build it if it isn't.
+        plugin_asset_path = f'{project_dir}/Assets/Simulation/RealSense/RealSenseNativePlugin.so'
+        native_plugin_dir = os.path.abspath(project_dir + '/realsense-native-plugin')
+        if not os.path.exists(plugin_asset_path):
+            self.get_logger().info('Native plugin not found. Building it now...')
+
+            # Build realsense_native_plugin on the host using CMake
+            cmd_prefix = ['distrobox-host-exec'] if running_in_distrobox else []
+
+            native_plugin_build_dir = native_plugin_dir + '/build'
+            os.makedirs(native_plugin_build_dir, exist_ok=True)
+
+            proc = subprocess.run(
+                cmd_prefix + ['cmake', '-B', native_plugin_build_dir, '-S', native_plugin_dir, '-DCMAKE_BUILD_TYPE=Release']
+            )
+            if proc.returncode != 0:
+                raise RuntimeError('Failed to configure CMake for realsense_native_plugin.')
+
+            proc = subprocess.run(
+                cmd_prefix + ['cmake', '--build', native_plugin_build_dir, '--config Release']
+            )
+            if proc.returncode != 0:
+                raise RuntimeError('Failed to build realsense_native_plugin.')
+
+            shutil.copy(f'{native_plugin_build_dir}/libRealSenseNativePlugin.so', plugin_asset_path)
+
 
         # Find Unity installation in ~/Unity/Hub/Editor/<version>.
         version = find_unity_version(project_dir)
@@ -60,7 +88,7 @@ def simulation(args=None):
 
 # Print the version of Unity.
 def version(args=None):
-    with open(ament_index_python.packages.get_package_share_directory('unity_sim') + "/src-root") as f:
+    with open(ament_index_python.packages.get_package_share_directory('unity_sim') + "/unity-project-dir") as f:
         project_dir = f.read()
     version = find_unity_version(project_dir)
     print(f"Unity {version}")

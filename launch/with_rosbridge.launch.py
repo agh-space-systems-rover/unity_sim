@@ -10,5 +10,5 @@ def generate_launch_description():
         Node(
             package='rosbridge_server',
             executable='rosbridge_websocket'
-        ),
+        )
     ])

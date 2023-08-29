@@ -582,6 +582,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7091747952906109040, guid: a1b30359e33dfadc08d8153bcaa0ed69,
         type: 3}
+      propertyPath: id
+      value: right
+      objectReference: {fileID: 0}
+    - target: {fileID: 7091747952906109040, guid: a1b30359e33dfadc08d8153bcaa0ed69,
+        type: 3}
       propertyPath: cameraId
       value: right
       objectReference: {fileID: 0}
@@ -653,7 +658,7 @@ MonoBehaviour:
   m_Antialiasing: 1
   m_AntialiasingQuality: 2
   m_StopNaN: 0
-  m_Dithering: 0
+  m_Dithering: 1
   m_ClearDepth: 1
   m_AllowXRRendering: 1
   m_AllowHDROutput: 1
@@ -756,6 +761,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7091747952906109040, guid: a1b30359e33dfadc08d8153bcaa0ed69,
         type: 3}
+      propertyPath: id
+      value: left
+      objectReference: {fileID: 0}
+    - target: {fileID: 7091747952906109040, guid: a1b30359e33dfadc08d8153bcaa0ed69,
+        type: 3}
       propertyPath: cameraId
       value: left
       objectReference: {fileID: 0}
@@ -827,7 +837,7 @@ MonoBehaviour:
   m_Antialiasing: 1
   m_AntialiasingQuality: 2
   m_StopNaN: 0
-  m_Dithering: 0
+  m_Dithering: 1
   m_ClearDepth: 1
   m_AllowXRRendering: 1
   m_AllowHDROutput: 1
@@ -1087,6 +1097,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7091747952906109040, guid: a1b30359e33dfadc08d8153bcaa0ed69,
         type: 3}
+      propertyPath: id
+      value: front
+      objectReference: {fileID: 0}
+    - target: {fileID: 7091747952906109040, guid: a1b30359e33dfadc08d8153bcaa0ed69,
+        type: 3}
       propertyPath: cameraId
       value: front
       objectReference: {fileID: 0}
@@ -1165,7 +1180,7 @@ MonoBehaviour:
   m_Antialiasing: 1
   m_AntialiasingQuality: 2
   m_StopNaN: 0
-  m_Dithering: 0
+  m_Dithering: 1
   m_ClearDepth: 1
   m_AllowXRRendering: 1
   m_AllowHDROutput: 1
@@ -1262,6 +1277,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7091747952906109040, guid: a1b30359e33dfadc08d8153bcaa0ed69,
         type: 3}
+      propertyPath: id
+      value: back
+      objectReference: {fileID: 0}
+    - target: {fileID: 7091747952906109040, guid: a1b30359e33dfadc08d8153bcaa0ed69,
+        type: 3}
       propertyPath: cameraId
       value: back
       objectReference: {fileID: 0}
@@ -1339,7 +1359,7 @@ MonoBehaviour:
   m_Antialiasing: 1
   m_AntialiasingQuality: 2
   m_StopNaN: 0
-  m_Dithering: 0
+  m_Dithering: 1
   m_ClearDepth: 1
   m_AllowXRRendering: 1
   m_AllowHDROutput: 1

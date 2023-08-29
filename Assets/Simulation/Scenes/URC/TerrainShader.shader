@@ -602,8 +602,7 @@ Shader "AmplifyShader"
 				float clampResult61 = clamp( (0.0 + (WorldPosition.y - -10.0) * (1.0 - 0.0) / (60.0 - -10.0)) , 0.01 , 0.99 );
 				float temp_output_54_0 = ( clampResult61 * 2.0 );
 				float temp_output_55_0 = frac( temp_output_54_0 );
-				Gradient gradient48 = NewGradient( 0, 6, 2, float4( 0.4470588, 0.3064509, 0.254902, 0.3264668 ), float4( 0.4554268, 0.2016264, 0.1560725, 0.3558862 ), float4( 0.3607843, 0.2078431, 0.1803922, 0.6205844 ), float4( 0.426, 0.2108041, 0.1317526, 0.6380407 ), float4( 0.345098, 0.1882353, 0.1568628, 0.8470588 ), float4( 0.4117647, 0.2627451, 0.2196078, 0.8735332 ), 0, 0, float2( 1, 0 ), float2( 1, 1 ), 0, 0, 0, 0, 0, 0 );
-				float4 lerpResult59 = lerp( SampleGradient( gradient49, temp_output_55_0 ) , SampleGradient( gradient48, temp_output_55_0 ) , step( temp_output_54_0 , 1.0 ));
+				float4 lerpResult59 = lerp( SampleGradient( gradient49, temp_output_55_0 ) , SampleGradient( (Gradient)0, temp_output_55_0 ) , step( temp_output_54_0 , 1.0 ));
 				float3 desaturateInitialColor70 = ( lerpResult59 * float4( float3(4,4,4) , 0.0 ) ).rgb;
 				float desaturateDot70 = dot( desaturateInitialColor70, float3( 0.299, 0.587, 0.114 ));
 				float3 desaturateVar70 = lerp( desaturateInitialColor70, desaturateDot70.xxx, 0.15 );
@@ -1851,8 +1850,7 @@ Shader "AmplifyShader"
 				float clampResult61 = clamp( (0.0 + (WorldPosition.y - -10.0) * (1.0 - 0.0) / (60.0 - -10.0)) , 0.01 , 0.99 );
 				float temp_output_54_0 = ( clampResult61 * 2.0 );
 				float temp_output_55_0 = frac( temp_output_54_0 );
-				Gradient gradient48 = NewGradient( 0, 6, 2, float4( 0.4470588, 0.3064509, 0.254902, 0.3264668 ), float4( 0.4554268, 0.2016264, 0.1560725, 0.3558862 ), float4( 0.3607843, 0.2078431, 0.1803922, 0.6205844 ), float4( 0.426, 0.2108041, 0.1317526, 0.6380407 ), float4( 0.345098, 0.1882353, 0.1568628, 0.8470588 ), float4( 0.4117647, 0.2627451, 0.2196078, 0.8735332 ), 0, 0, float2( 1, 0 ), float2( 1, 1 ), 0, 0, 0, 0, 0, 0 );
-				float4 lerpResult59 = lerp( SampleGradient( gradient49, temp_output_55_0 ) , SampleGradient( gradient48, temp_output_55_0 ) , step( temp_output_54_0 , 1.0 ));
+				float4 lerpResult59 = lerp( SampleGradient( gradient49, temp_output_55_0 ) , SampleGradient( (Gradient)0, temp_output_55_0 ) , step( temp_output_54_0 , 1.0 ));
 				float3 desaturateInitialColor70 = ( lerpResult59 * float4( float3(4,4,4) , 0.0 ) ).rgb;
 				float desaturateDot70 = dot( desaturateInitialColor70, float3( 0.299, 0.587, 0.114 ));
 				float3 desaturateVar70 = lerp( desaturateInitialColor70, desaturateDot70.xxx, 0.15 );
@@ -2194,8 +2192,7 @@ Shader "AmplifyShader"
 				float clampResult61 = clamp( (0.0 + (WorldPosition.y - -10.0) * (1.0 - 0.0) / (60.0 - -10.0)) , 0.01 , 0.99 );
 				float temp_output_54_0 = ( clampResult61 * 2.0 );
 				float temp_output_55_0 = frac( temp_output_54_0 );
-				Gradient gradient48 = NewGradient( 0, 6, 2, float4( 0.4470588, 0.3064509, 0.254902, 0.3264668 ), float4( 0.4554268, 0.2016264, 0.1560725, 0.3558862 ), float4( 0.3607843, 0.2078431, 0.1803922, 0.6205844 ), float4( 0.426, 0.2108041, 0.1317526, 0.6380407 ), float4( 0.345098, 0.1882353, 0.1568628, 0.8470588 ), float4( 0.4117647, 0.2627451, 0.2196078, 0.8735332 ), 0, 0, float2( 1, 0 ), float2( 1, 1 ), 0, 0, 0, 0, 0, 0 );
-				float4 lerpResult59 = lerp( SampleGradient( gradient49, temp_output_55_0 ) , SampleGradient( gradient48, temp_output_55_0 ) , step( temp_output_54_0 , 1.0 ));
+				float4 lerpResult59 = lerp( SampleGradient( gradient49, temp_output_55_0 ) , SampleGradient( (Gradient)0, temp_output_55_0 ) , step( temp_output_54_0 , 1.0 ));
 				float3 desaturateInitialColor70 = ( lerpResult59 * float4( float3(4,4,4) , 0.0 ) ).rgb;
 				float desaturateDot70 = dot( desaturateInitialColor70, float3( 0.299, 0.587, 0.114 ));
 				float3 desaturateVar70 = lerp( desaturateInitialColor70, desaturateDot70.xxx, 0.15 );
@@ -3007,8 +3004,7 @@ Shader "AmplifyShader"
 				float clampResult61 = clamp( (0.0 + (WorldPosition.y - -10.0) * (1.0 - 0.0) / (60.0 - -10.0)) , 0.01 , 0.99 );
 				float temp_output_54_0 = ( clampResult61 * 2.0 );
 				float temp_output_55_0 = frac( temp_output_54_0 );
-				Gradient gradient48 = NewGradient( 0, 6, 2, float4( 0.4470588, 0.3064509, 0.254902, 0.3264668 ), float4( 0.4554268, 0.2016264, 0.1560725, 0.3558862 ), float4( 0.3607843, 0.2078431, 0.1803922, 0.6205844 ), float4( 0.426, 0.2108041, 0.1317526, 0.6380407 ), float4( 0.345098, 0.1882353, 0.1568628, 0.8470588 ), float4( 0.4117647, 0.2627451, 0.2196078, 0.8735332 ), 0, 0, float2( 1, 0 ), float2( 1, 1 ), 0, 0, 0, 0, 0, 0 );
-				float4 lerpResult59 = lerp( SampleGradient( gradient49, temp_output_55_0 ) , SampleGradient( gradient48, temp_output_55_0 ) , step( temp_output_54_0 , 1.0 ));
+				float4 lerpResult59 = lerp( SampleGradient( gradient49, temp_output_55_0 ) , SampleGradient( (Gradient)0, temp_output_55_0 ) , step( temp_output_54_0 , 1.0 ));
 				float3 desaturateInitialColor70 = ( lerpResult59 * float4( float3(4,4,4) , 0.0 ) ).rgb;
 				float desaturateDot70 = dot( desaturateInitialColor70, float3( 0.299, 0.587, 0.114 ));
 				float3 desaturateVar70 = lerp( desaturateInitialColor70, desaturateDot70.xxx, 0.15 );
@@ -3710,11 +3706,11 @@ Version=19105
 Node;AmplifyShaderEditor.DynamicAppendNode;28;-1914.171,250.3141;Inherit;False;FLOAT2;4;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;0;False;1;FLOAT2;0
 Node;AmplifyShaderEditor.WorldPosInputsNode;27;-2139.042,229.3521;Inherit;False;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;22;-1767.99,292.6068;Inherit;False;2;2;0;FLOAT2;0,0;False;1;FLOAT2;0.5,0.5;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.TexturePropertyNode;36;-1149.072,-848.3214;Inherit;True;Property;_Texture0;Texture 0;1;0;Create;True;0;0;0;False;0;False;None;f1f07724e0c9e5b639bab1829fd855e4;False;white;Auto;Texture2D;-1;0;2;SAMPLER2D;0;SAMPLERSTATE;1
+Node;AmplifyShaderEditor.TexturePropertyNode;36;-1149.072,-848.3214;Inherit;True;Property;_Texture0;Texture 0;1;0;Create;True;0;0;0;False;0;False;None;None;False;white;Auto;Texture2D;-1;0;2;SAMPLER2D;0;SAMPLERSTATE;1
 Node;AmplifyShaderEditor.ParallaxOcclusionMappingNode;35;-761.4951,-640.9452;Inherit;False;0;8;False;;16;False;;2;0.05;0;False;1,1;False;0,0;8;0;FLOAT2;0,0;False;1;SAMPLER2D;;False;7;SAMPLERSTATE;;False;2;FLOAT;0.02;False;3;FLOAT3;0,0,0;False;4;FLOAT;0;False;5;FLOAT2;0,0;False;6;FLOAT;0;False;1;FLOAT2;0
 Node;AmplifyShaderEditor.ViewDirInputsCoordNode;31;-1184.51,-350.5784;Inherit;True;World;False;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
 Node;AmplifyShaderEditor.FunctionNode;42;-1213.218,-447.7421;Inherit;False;Derive Tangent Basis;-1;;2;fee816718ad753c4f9b25822c0d67438;0;1;5;FLOAT2;0,0;False;2;FLOAT3x3;0;FLOAT3x3;6
-Node;AmplifyShaderEditor.SimpleMultiplyOpNode;43;-947.8749,-407.3304;Inherit;False;2;2;0;FLOAT3x3;0,0,0,0,1,1,1,0,1;False;1;FLOAT3;0,0,0;False;1;FLOAT3;0
+Node;AmplifyShaderEditor.SimpleMultiplyOpNode;43;-947.8749,-407.3304;Inherit;False;2;2;0;FLOAT3x3;0,0,0,1,1,1,1,0,1;False;1;FLOAT3;0,0,0;False;1;FLOAT3;0
 Node;AmplifyShaderEditor.WireNode;47;-1339.846,-442.7545;Inherit;False;1;0;FLOAT2;0,0;False;1;FLOAT2;0
 Node;AmplifyShaderEditor.WireNode;44;-943.6954,381.0247;Inherit;False;1;0;FLOAT2;0,0;False;1;FLOAT2;0
 Node;AmplifyShaderEditor.SamplerNode;3;-735.4677,222.8586;Inherit;True;Property;_udfnabaew_2K_AO;udfnabaew_2K_AO;0;0;Create;True;0;0;0;False;0;False;-1;0339580b4cbbedcda8c646062eb17fed;0339580b4cbbedcda8c646062eb17fed;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
@@ -3781,4 +3777,4 @@ WireConnection;70;0;66;0
 WireConnection;66;0;59;0
 WireConnection;66;1;67;0
 ASEEND*/
-//CHKSM=125B2B337E3B580A8A2DFF7C77C2BA04A6F76D5C
+//CHKSM=94A015BA33BA9A8EB99AD24D9200FE8EB0AC7369
