@@ -294,12 +294,9 @@ API_EXPORT void OpenBridgeConnection(const char *id, int width, int height, int 
 				auto epoch = std::chrono::system_clock().now();
 				auto epoch_sec = std::chrono::time_point_cast<std::chrono::seconds>(epoch);
 				auto epoch_nanosec = std::chrono::duration_cast<std::chrono::nanoseconds>(epoch - epoch_sec);
-				nlohmann::json header{
-					{"stamp", {
-						{"sec", epoch_sec.time_since_epoch().count()},
-						{"nanosec", epoch_nanosec.count()},
-					}},
-					{"frame_id", id_str},
+				nlohmann::json stamp{
+					{"sec", epoch_sec.time_since_epoch().count()},
+					{"nanosec", epoch_nanosec.count()}
 				};
 
 				// Send data to rosbridge
@@ -309,7 +306,10 @@ API_EXPORT void OpenBridgeConnection(const char *id, int width, int height, int 
 						{"op", "publish"},
 						{"topic", "/" + id_str + "/color/image_raw/compressed"},
 						{"msg", {
-							{"header", header},
+							{"header", {
+								{"stamp", stamp},
+								{"frame_id", id_str + "_color_frame"},
+							}},
 							{"format", "jpeg"},
 							{"data", base64_encode(color_jpeg_buf, color_jpeg_size)}
 						}},
@@ -320,7 +320,10 @@ API_EXPORT void OpenBridgeConnection(const char *id, int width, int height, int 
 						{"op", "publish"},
 						{"topic", "/" + id_str + "/depth/image_rect_raw/compressed"},
 						{"msg", {
-							{"header", header},
+							{"header", {
+								{"stamp", stamp},
+								{"frame_id", id_str + "_depth_frame"},
+							}},
 							{"format", "jpeg"},
 							{"data", base64_encode(depth_jpeg_buf, depth_jpeg_size)}
 						}},
@@ -331,7 +334,10 @@ API_EXPORT void OpenBridgeConnection(const char *id, int width, int height, int 
 						{"op", "publish"},
 						{"topic", "/" + id_str + "/depth/color/points"},
 						{"msg", {
-							{"header", header},
+							{"header", {
+								{"stamp", stamp},
+								{"frame_id", id_str + "_depth_frame"},
+							}},
 							{"height", 1},
 							{"width", point_cloud.size() / 16},
 							{"fields", {

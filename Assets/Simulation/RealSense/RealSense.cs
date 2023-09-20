@@ -142,23 +142,24 @@ public class RealSense : MonoBehaviour
                     uint nanosec = (uint)span.Milliseconds * 1000;
 
                     // Compose the header
-                    var header = new ROSBridge.StdMsgs.Header
+                    var stamp = new ROSBridge.BuiltinInterfaces.Time
                     {
-                        Stamp = new ROSBridge.BuiltinInterfaces.Time
-                        {
-                            Sec = sec,
-                            Nanosec = nanosec
-                        },
-                        FrameId = id
+                        Sec = sec,
+                        Nanosec = nanosec
                     };
 
                     // NOTE: camera_info messages are copied from gazebo and most probably are invalid.
 
                     // Publish color info
+                    // TODO: placeholder values
                     await colorInfoPublisher.Publish(
                         new ROSBridge.SensorMsgs.CameraInfo
                         {
-                            Header = header,
+                            Header = new ROSBridge.StdMsgs.Header
+                            {
+                                Stamp = stamp,
+                                FrameId = id + "_color_optical_frame"
+                            },
                             Height = (uint)height,
                             Width = (uint)width,
                             DistortionModel = "plumb_bob",
@@ -180,10 +181,15 @@ public class RealSense : MonoBehaviour
                     );
 
                     // Publish depth info
+                    // TODO: placeholder values
                     await colorInfoPublisher.Publish(
                         new ROSBridge.SensorMsgs.CameraInfo
                         {
-                            Header = header,
+                            Header = new ROSBridge.StdMsgs.Header
+                            {
+                                Stamp = stamp,
+                                FrameId = id + "_depth_optical_frame"
+                            },
                             Height = (uint)height,
                             Width = (uint)width,
                             DistortionModel = "plumb_bob",
