@@ -15,41 +15,84 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+inline std::string get_base64_chars() {
+    static std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                   "abcdefghijklmnopqrstuvwxyz"
+                                   "0123456789+/";
+    return base64_chars;
+}
+
+inline std::string to_base64(std::string const &data) {
+  int counter = 0;
+  uint32_t bit_stream = 0;
+  const std::string base64_chars = get_base64_chars();
+  std::string encoded;
+  int offset = 0;
+  for (unsigned char c : data) {
+    auto num_val = static_cast<unsigned int>(c);
+    offset = 16 - counter % 3 * 8;
+    bit_stream += num_val << offset;
+    if (offset == 16) {
+      encoded += base64_chars.at(bit_stream >> 18 & 0x3f);
+    }
+    if (offset == 8) {
+      encoded += base64_chars.at(bit_stream >> 12 & 0x3f);
+    }
+    if (offset == 0 && counter != 3) {
+      encoded += base64_chars.at(bit_stream >> 6 & 0x3f);
+      encoded += base64_chars.at(bit_stream & 0x3f);
+      bit_stream = 0;
+    }
+    counter++;
+  }
+  if (offset == 16) {
+    encoded += base64_chars.at(bit_stream >> 12 & 0x3f);
+    encoded += "==";
+  }
+  if (offset == 8) {
+    encoded += base64_chars.at(bit_stream >> 6 & 0x3f);
+    encoded += '=';
+  }
+  return encoded;
+}
+
 // Function to encode binary data to base64
 std::string base64_encode(uint8_t *data, size_t size) {
-    const char base64_chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	return to_base64(std::string(reinterpret_cast<char *>(data), size));
 
-    size_t input_size = size;
-    size_t i = 0;
+    // const char base64_chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-    // Calculate the size of the output string and reserve space
-    size_t output_size = 4 * ((input_size + 2) / 3); // Includes padding
-    std::string base64_str;
-    base64_str.reserve(output_size);
+    // size_t input_size = size;
+    // size_t i = 0;
 
-    while (i < input_size) {
-        uint8_t octet1 = i < input_size ? data[i++] : 0;
-        uint8_t octet2 = i < input_size ? data[i++] : 0;
-        uint8_t octet3 = i < input_size ? data[i++] : 0;
+    // // Calculate the size of the output string and reserve space
+    // size_t output_size = 4 * ((input_size + 2) / 3); // Includes padding
+    // std::string base64_str;
+    // base64_str.reserve(output_size);
 
-        uint32_t triplet = (static_cast<uint32_t>(octet1) << 16) |
-                           (static_cast<uint32_t>(octet2) << 8) |
-                           static_cast<uint32_t>(octet3);
+    // while (i < input_size) {
+    //     uint8_t octet1 = i < input_size ? data[i++] : 0;
+    //     uint8_t octet2 = i < input_size ? data[i++] : 0;
+    //     uint8_t octet3 = i < input_size ? data[i++] : 0;
 
-        base64_str.push_back(base64_chars[(triplet >> 18) & 0x3F]);
-        base64_str.push_back(base64_chars[(triplet >> 12) & 0x3F]);
-        base64_str.push_back(base64_chars[(triplet >> 6) & 0x3F]);
-        base64_str.push_back(base64_chars[triplet & 0x3F]);
-    }
+    //     uint32_t triplet = (static_cast<uint32_t>(octet1) << 16) |
+    //                        (static_cast<uint32_t>(octet2) << 8) |
+    //                        static_cast<uint32_t>(octet3);
 
-    // Handle padding if necessary
-    size_t padding = 3 - (input_size % 3);
-    while (padding > 0) {
-        base64_str.push_back('=');
-        padding--;
-    }
+    //     base64_str.push_back(base64_chars[(triplet >> 18) & 0x3F]);
+    //     base64_str.push_back(base64_chars[(triplet >> 12) & 0x3F]);
+    //     base64_str.push_back(base64_chars[(triplet >> 6) & 0x3F]);
+    //     base64_str.push_back(base64_chars[triplet & 0x3F]);
+    // }
 
-    return base64_str;
+    // // Handle padding if necessary
+    // size_t padding = 3 - (input_size % 3);
+    // while (padding > 0) {
+    //     base64_str.push_back('=');
+    //     padding--;
+    // }
+
+    // return base64_str;
 }
 
 class real_sense {
@@ -70,7 +113,7 @@ std::map<std::string, real_sense> cameras;
 #define API_EXPORT __attribute__((visibility("default")))
 extern "C" {
 
-API_EXPORT void OpenBridgeConnection(const char *id, int width, int height, int vfov, int depth_min, int depth_max) {
+API_EXPORT void OpenBridgeConnection(const char *id, int width, int height, float vfov, float depth_min, float depth_max) {
 	std::string id_str{id};
 	auto &rs = cameras[id_str];
 	rs.width = width;
@@ -255,8 +298,13 @@ API_EXPORT void OpenBridgeConnection(const char *id, int width, int height, int 
 				point_cloud.clear();
 				for (int row = 0; row < point_cloud_height; row++) {
 					for (int col = 0; col < point_cloud_width; col++) {
-						int src_row = row * (rs.height / point_cloud_height);
-						int src_col = col * (rs.width / point_cloud_width);
+						int src_row = row * (static_cast<float>(rs.height) / point_cloud_height) + 0.5;
+						int src_col = col * (static_cast<float>(rs.width) / point_cloud_width) + 0.5;
+						
+						if (src_row < 0 || src_row >= rs.height || src_col < 0 || src_col >= rs.width) {
+							continue;
+						}
+
 						uint8_t src_depth = depth[src_row * rs.width + src_col];
 						uint32_t src_r = color[src_row * rs.width + src_col * 3 + 0];
 						uint32_t src_g = color[src_row * rs.width + src_col * 3 + 1];
@@ -267,20 +315,20 @@ API_EXPORT void OpenBridgeConnection(const char *id, int width, int height, int 
 							point_cloud.resize(point_cloud.size() + 16);
 
 							float z = static_cast<float>(src_depth) / 255.0 * (rs.depth_max - rs.depth_min) + rs.depth_min;
-							float u = static_cast<float>(col) / rs.width * 2 - 1;
-							float v = static_cast<float>(row) / rs.height  * 2 - 1;
-							float hfov = rs.width / rs.height * rs.vfov;
-							float x = std::tan((hfov / 2) * 3.14159F / 180) * z;
-							float y = std::tan((rs.vfov / 2) * 3.14159F / 180) * z;
+							float u = static_cast<float>(col) / point_cloud_width * 2 - 1;
+							float v = -(static_cast<float>(row) / point_cloud_height  * 2 - 1);
+							float hfov = static_cast<float>(rs.width) / rs.height * rs.vfov;
+							float x = std::tan((hfov / 2) * 3.14159F / 180) * z * u;
+							float y = std::tan((rs.vfov / 2) * 3.14159F / 180) * z * v;
 							// float r = static_cast<float>(src_r) / 255.0;
 							// float g = static_cast<float>(src_g) / 255.0;
 							// float b = static_cast<float>(src_b) / 255.0;
-							uint32_t rgb = (src_r << 16) | (src_g << 8) | src_b;
+							uint32_t rgb = (src_r & 0xff) << 16 | (src_g & 0xff) << 8 | (src_b & 0xff);
 							
 							// Add a point to the buffer.
-							*reinterpret_cast<float *>(&point_cloud[i + 0]) = x;
-							*reinterpret_cast<float *>(&point_cloud[i + 4]) = y;
-							*reinterpret_cast<float *>(&point_cloud[i + 8]) = z;
+							*reinterpret_cast<float *>(&point_cloud[i + 0]) = z;
+							*reinterpret_cast<float *>(&point_cloud[i + 4]) = -x;
+							*reinterpret_cast<float *>(&point_cloud[i + 8]) = y;
 							*reinterpret_cast<uint32_t *>(&point_cloud[i + 12]) = rgb;
 						}
 					}
