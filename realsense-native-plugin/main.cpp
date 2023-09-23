@@ -306,9 +306,9 @@ API_EXPORT void OpenBridgeConnection(const char *id, int width, int height, floa
 						}
 
 						uint8_t src_depth = depth[src_row * rs.width + src_col];
-						uint32_t src_r = color[src_row * rs.width + src_col * 3 + 0];
-						uint32_t src_g = color[src_row * rs.width + src_col * 3 + 1];
-						uint32_t src_b = color[src_row * rs.width + src_col * 3 + 2];
+						uint32_t src_r = color[(src_row * rs.width + src_col) * 3 + 0];
+						uint32_t src_g = color[(src_row * rs.width + src_col) * 3 + 1];
+						uint32_t src_b = color[(src_row * rs.width + src_col) * 3 + 2];
 
 						if (src_depth != 0) {
 							size_t i = point_cloud.size();
@@ -317,8 +317,8 @@ API_EXPORT void OpenBridgeConnection(const char *id, int width, int height, floa
 							float z = static_cast<float>(src_depth) / 255.0 * (rs.depth_max - rs.depth_min) + rs.depth_min;
 							float u = static_cast<float>(col) / point_cloud_width * 2 - 1;
 							float v = -(static_cast<float>(row) / point_cloud_height  * 2 - 1);
-							float hfov = static_cast<float>(rs.width) / rs.height * rs.vfov;
-							float x = std::tan((hfov / 2) * 3.14159F / 180) * z * u;
+							float aspect = static_cast<float>(rs.width) / rs.height;
+							float x = std::tan((rs.vfov / 2) * 3.14159F / 180) * z * u * aspect;
 							float y = std::tan((rs.vfov / 2) * 3.14159F / 180) * z * v;
 							// float r = static_cast<float>(src_r) / 255.0;
 							// float g = static_cast<float>(src_g) / 255.0;

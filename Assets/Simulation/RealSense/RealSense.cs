@@ -27,7 +27,7 @@ public class RealSense : MonoBehaviour
     [SerializeField]
     private float depthMin = 0.5F;
     [SerializeField]
-    private float depthMax = 16.0F;
+    private float depthMax = 8.0F;
     [SerializeField]
     private string id = "camera";
 
@@ -59,7 +59,6 @@ public class RealSense : MonoBehaviour
         depthMaterial = new Material(depthShader);
         depthMaterial.SetFloat("_DepthMin", depthMin);
         depthMaterial.SetFloat("_DepthMax", depthMax);
-        depthMaterial.SetFloat("_DepthRange", cam.farClipPlane - cam.nearClipPlane);
 
         // async capture
         asyncRt = new RenderTexture(width, height, 0);
