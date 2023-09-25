@@ -20,9 +20,6 @@ namespace ROSBridge
         internal ClientWebSocket socket;
         internal TaskCompletionSource<bool> connectionEstablished = new TaskCompletionSource<bool>();
         internal readonly Dictionary<string, Action<JObject>> _subscribers = new Dictionary<string, Action<JObject>>();
-        // private readonly var _servers = new Dictionary<string, Func<object, object>>();
-        // private readonly var _callInstances = new Dictionary<string, CallInstance>();
-        internal int callIdCounter = 0;
 
         public ROS(string host = "localhost:9090")
         {
@@ -61,32 +58,6 @@ namespace ROSBridge
             // Return a publisher object.
             return new Publisher<T>(this, topic);
         }
-
-        // public void Serve(string service, Func<object, object> callback)
-        // {
-        //     _ = ServeAsync(service, callback);
-        // }
-
-        // public async Task ServeAsync(string service, Func<object, object> callback)
-        // {
-        //     // Wait for the connection to be established.
-        //     await connectionEstablished.Task;
-
-        //     // Send a service registration request.
-        //     await SendAsync(CreateCborMessage(new Dictionary<string, object> { ["serve"] = service }));
-
-        //     // Remember the callback.
-        //     _servers[service] = callback;
-        // }
-
-        // public ServiceCall Call(string service)
-        // {
-        //     // Normalize service ID.
-        //     service = service.Trim('/');
-
-        //     // Return a call object.
-        //     return new ServiceCall(this, service);
-        // }
 
         public async Task Close()
         {
@@ -166,56 +137,6 @@ namespace ROSBridge
             }
         }
 
-        // private async Task ProcessMessageAsync(CBORObject msg)
-        // {
-        //     if (msg.ContainsKey("publish") && msg.ContainsKey("msg"))
-        //     {
-        //         string topic = msg["publish"].AsString();
-        //         CBORObject _msg = msg["msg"];
-
-        //         _subscribers[topic]?.Invoke(_msg);
-        //     }
-        //     else if (msg.ContainsKey("call") && msg.ContainsKey("id") && msg.ContainsKey("req"))
-        //     {
-        //         string service = msg["call"].AsString();
-        //         string id = msg["id"].AsString();
-        //         object req = msg["req"];
-
-        //         object res = _servers[service]?.Invoke(req);
-
-        //         await SendAsync(CreateCborMessage(new Dictionary<string, object> { ["call"] = service, ["id"] = id, ["res"] = res }));
-        //     }
-        //     else if (msg.ContainsKey("call") && msg.ContainsKey("id") && msg.ContainsKey("res"))
-        //     {
-        //         string service = msg["call"].AsString();
-        //         string id = msg["id"].AsString();
-        //         CBORObject res = msg["res"];
-        //         CBORObject error = msg.ContainsKey("error") ? msg["error"] : null;
-
-        //         if (_callInstances.TryGetValue(id, out CallInstance call))
-        //         {
-        //             call.Res = res;
-        //             call.Error = error;
-
-        //             // Set the condition.
-        //             call.Condition.SetResult(true);
-
-        //             if (error == null)
-        //             {
-        //                 _callInstances.Remove(id);
-        //             }
-        //         }
-        //     }
-        //     else if (msg.ContainsKey("error"))
-        //     {
-        //         throw new InvalidOperationException(msg["error"].AsString());
-        //     }
-        //     else
-        //     {
-        //         throw new InvalidOperationException("Received invalid message from server.");
-        //     }
-        // }
-
         internal async Task Send<T>(T msg)
         {
             // Wait for the connection to be established.
@@ -235,70 +156,6 @@ namespace ROSBridge
             // Send it.
             await socket.SendAsync(encoded, WebSocketMessageType.Text, true, CancellationToken.None);
         }
-
-
-        // private async Task<CBORObject> SendCallAsync(string service, CBORObject req)
-        // {
-        //     string callId = _callIdCounter++.ToString();
-        //     CallInstance call = new CallInstance();
-
-        //     CBORObject callMsg = CBORObject.NewMap();
-        //     callMsg.Add("call", service);
-        //     callMsg.Add("id", callId);
-        //     callMsg.Add("req", req);
-
-        //     // Reset the condition.
-        //     call.Condition = new TaskCompletionSource<bool>();
-
-        //     _callInstances[callId] = call;
-        //     await SendAsync(callMsg);
-
-        //     // Wait for the condition to be set by the recv loop.
-        //     await call.Condition.Task;
-
-        //     if (call.Error != null)
-        //     {
-        //         throw new InvalidOperationException(call.Error.ToString());
-        //     }
-
-        //     return call.Res;
-        // }
-
-        // private class CallInstance
-        // {
-        //     public CBORObject Res { get; set; }
-        //     public CBORObject Error { get; set; }
-        //     public TaskCompletionSource<bool> Condition { get; set; }
-        // }
-
-
-
-        // public class ServiceCall
-        // {
-        //     private readonly Client _client;
-        //     private readonly string _service;
-
-        //     public ServiceCall(Client client, string service)
-        //     {
-        //         _client = client;
-        //         _service = service;
-        //     }
-
-        //     public CBORObject Call(CBORObject req)
-        //     {
-        //         var task = CallAsync(req);
-        //         Task.Run(async () => await task).Wait();
-        //         return task.Result;
-        //     }
-
-        //     public async Task<CBORObject> CallAsync(CBORObject req)
-        //     {
-        //         // Wait for the connection to be established.
-        //         await _client.connectionEstablished.Task;
-
-        //         return await _client.SendCallAsync(_service, req);
-        //     }
-        // }
     }
 
 }

@@ -34,9 +34,11 @@ Shader "Custom/DepthTextureShader"
 
             half4 frag (v2f i) : COLOR
             {
-                float distance = LinearEyeDepth(tex2D(_CameraDepthTexture, i.uv).x);
-                float value = (distance - _DepthMin) / (_DepthMax - _DepthMin); // linear depth fraction between depth min and max
-                float cutoff = (1 - step(_DepthMax, distance)) * step(_DepthMin, distance);
+                float zDistance = LinearEyeDepth(tex2D(_CameraDepthTexture, i.uv).x);
+                float value = (zDistance - _DepthMin) / (_DepthMax - _DepthMin);
+                // (value = [0, 1] fraction that maps linearly to [0, depth max - depth min])
+                // value = 0
+                float cutoff = (1 - step(_DepthMax, zDistance)) * step(_DepthMin, zDistance);
                 value *= cutoff; 
                 
                 float4 color;

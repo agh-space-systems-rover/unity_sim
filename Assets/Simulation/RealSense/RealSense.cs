@@ -73,8 +73,8 @@ public class RealSense : MonoBehaviour
 
         // ROS
         var ros = new ROS();
-        Publisher<ROSBridge.SensorMsgs.CameraInfo> colorInfoPublisher = await ros.CreatePublisher<ROSBridge.SensorMsgs.CameraInfo>("/" + id + "/color/camera_info");
-        Publisher<ROSBridge.SensorMsgs.CameraInfo> depthInfoPublisher = await ros.CreatePublisher<ROSBridge.SensorMsgs.CameraInfo>("/" + id + "/depth/camera_info");
+        // Publisher<ROSBridge.SensorMsgs.CameraInfo> colorInfoPublisher = await ros.CreatePublisher<ROSBridge.SensorMsgs.CameraInfo>("/" + id + "/color/camera_info");
+        // Publisher<ROSBridge.SensorMsgs.CameraInfo> depthInfoPublisher = await ros.CreatePublisher<ROSBridge.SensorMsgs.CameraInfo>("/" + id + "/depth/camera_info");
         OpenBridgeConnection(id, width, height, vFov, depthMin, depthMax);
 
         // Use a custom update loop to guarantee resource destruction.
@@ -134,80 +134,68 @@ public class RealSense : MonoBehaviour
                         TryPushFrame(id, NativeArrayUnsafeUtility.GetUnsafePtr(buffer));
                     }
 
-                    // Fetch current time
-                    DateTime epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-                    TimeSpan span = (DateTime.UtcNow - epochStart);
-                    int sec = (int)span.TotalSeconds;
-                    uint nanosec = (uint)span.Milliseconds * 1000;
-
-                    // Compose the header
-                    var stamp = new ROSBridge.BuiltinInterfaces.Time
-                    {
-                        Sec = sec,
-                        Nanosec = nanosec
-                    };
-
                     // NOTE: camera_info messages are copied from gazebo and most probably are invalid.
 
                     // Publish color info
                     // TODO: placeholder values
-                    await colorInfoPublisher.Publish(
-                        new ROSBridge.SensorMsgs.CameraInfo
-                        {
-                            Header = new ROSBridge.StdMsgs.Header
-                            {
-                                Stamp = stamp,
-                                FrameId = id + "_color_optical_frame"
-                            },
-                            Height = (uint)height,
-                            Width = (uint)width,
-                            DistortionModel = "plumb_bob",
-                            D = new double[] { 0, 0, 0, 0, 0 },
-                            K = new double[] { 283.119, 0, 320.5, 0, 283.119, 240.5, 0, 0, 1 },
-                            R = new double[] { 1, 0, 0, 0, 1, 0, 0, 0, 1 },
-                            P = new double[] { 283.119, 0, 320.5, -19.818, 0, 283.119, 240.5, 0, 0, 0, 1, 0 },
-                            BinningX = 0,
-                            BinningY = 0,
-                            ROI = new ROSBridge.SensorMsgs.RegionOfInterest
-                            {
-                                XOffset = 0,
-                                YOffset = 0,
-                                Height = 0,
-                                Width = 0,
-                                DoRectify = false
-                            }
-                        }
-                    );
+                    // var stamp = new ROSBridge.BuiltinInterfaces.Time().Current();
+                    // await colorInfoPublisher.Publish(
+                    //     new ROSBridge.SensorMsgs.CameraInfo
+                    //     {
+                    //         Header = new ROSBridge.StdMsgs.Header
+                    //         {
+                    //             Stamp = stamp,
+                    //             FrameId = id + "_color_optical_frame"
+                    //         },
+                    //         Height = (uint)height,
+                    //         Width = (uint)width,
+                    //         DistortionModel = "plumb_bob",
+                    //         D = new double[] { 0, 0, 0, 0, 0 },
+                    //         K = new double[] { 283.119, 0, 320.5, 0, 283.119, 240.5, 0, 0, 1 },
+                    //         R = new double[] { 1, 0, 0, 0, 1, 0, 0, 0, 1 },
+                    //         P = new double[] { 283.119, 0, 320.5, -19.818, 0, 283.119, 240.5, 0, 0, 0, 1, 0 },
+                    //         BinningX = 0,
+                    //         BinningY = 0,
+                    //         ROI = new ROSBridge.SensorMsgs.RegionOfInterest
+                    //         {
+                    //             XOffset = 0,
+                    //             YOffset = 0,
+                    //             Height = 0,
+                    //             Width = 0,
+                    //             DoRectify = false
+                    //         }
+                    //     }
+                    // );
 
                     // Publish depth info
                     // TODO: placeholder values
-                    await colorInfoPublisher.Publish(
-                        new ROSBridge.SensorMsgs.CameraInfo
-                        {
-                            Header = new ROSBridge.StdMsgs.Header
-                            {
-                                Stamp = stamp,
-                                FrameId = id + "_depth_optical_frame"
-                            },
-                            Height = (uint)height,
-                            Width = (uint)width,
-                            DistortionModel = "plumb_bob",
-                            D = new double[] { 0, 0, 0, 0, 0 },
-                            K = new double[] { 283.119, 0, 320.5, 0, 283.119, 240.5, 0, 0, 1 },
-                            R = new double[] { 1, 0, 0, 0, 1, 0, 0, 0, 1 },
-                            P = new double[] { 283.119, 0, 320.5, 0, 0, 283.119, 240.5, 0, 0, 0, 1, 0 },
-                            BinningX = 0,
-                            BinningY = 0,
-                            ROI = new ROSBridge.SensorMsgs.RegionOfInterest
-                            {
-                                XOffset = 0,
-                                YOffset = 0,
-                                Height = 0,
-                                Width = 0,
-                                DoRectify = false
-                            }
-                        }
-                    );
+                    // await colorInfoPublisher.Publish(
+                    //     new ROSBridge.SensorMsgs.CameraInfo
+                    //     {
+                    //         Header = new ROSBridge.StdMsgs.Header
+                    //         {
+                    //             Stamp = stamp,
+                    //             FrameId = id + "_depth_optical_frame"
+                    //         },
+                    //         Height = (uint)height,
+                    //         Width = (uint)width,
+                    //         DistortionModel = "plumb_bob",
+                    //         D = new double[] { 0, 0, 0, 0, 0 },
+                    //         K = new double[] { 283.119, 0, 320.5, 0, 283.119, 240.5, 0, 0, 1 },
+                    //         R = new double[] { 1, 0, 0, 0, 1, 0, 0, 0, 1 },
+                    //         P = new double[] { 283.119, 0, 320.5, 0, 0, 283.119, 240.5, 0, 0, 0, 1, 0 },
+                    //         BinningX = 0,
+                    //         BinningY = 0,
+                    //         ROI = new ROSBridge.SensorMsgs.RegionOfInterest
+                    //         {
+                    //             XOffset = 0,
+                    //             YOffset = 0,
+                    //             Height = 0,
+                    //             Width = 0,
+                    //             DoRectify = false
+                    //         }
+                    //     }
+                    // );
                 }
             }
         }
