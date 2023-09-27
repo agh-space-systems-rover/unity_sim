@@ -248,6 +248,7 @@ int main(int argc, char **argv) {
     strncpy(server_addr.sun_path, "/tmp/unity_rs_publisher", sizeof(server_addr.sun_path) - 1);
 
     // Bind the socket to the server address
+    unlink("/tmp/unity_rs_publisher"); // Make sure the socket doesn't already exist.
     if (bind(server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
         RCLCPP_ERROR(ros_node->get_logger(), "Socket binding failed");
         close(server_socket);
