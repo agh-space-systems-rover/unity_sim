@@ -22,6 +22,7 @@ Once the workspace is built, you need to find out which Unity version is require
 ros2 run unity_sim version
 ```
 And this command will yield something akin to `Unity 2023.1.9f1`. (Exact version may differ!)
+
 You need to install this version of Unity on your system. Start by installing Unity Hub (either from the AUR package `unityhub` or) by downloading it directly from [here](https://unity3d.com/get-unity/download). Once you have Unity Hub installed, it should prompt you to sing into your account in order to activate a personal license. Once you are logged in, you can install the required version of Unity. Unity Hub only provides download links for the latest versions of Unity, so you will need to use the [Unity Archive](https://unity.com/releases/editor/archive) to find the version you need. From there you can click a hyperlink that will open Unity Hub and start the download. After the download is complete, you can close Unity Hub and run the simulation:
 ```bash
 ros2 launch unity_sim unity_sim.launch.py
