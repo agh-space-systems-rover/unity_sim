@@ -6,7 +6,7 @@ Unity simulation environment for AGH Space Systems robotics projects.
 
 ## Getting Started
 
-This repository uses Git LFS extension to facilitate version control of large asset files in this project. **BEFORE YOU CLONE** this repository, you must install, the Git LFS addon using your system's package manager or by downloading it directly as described [here](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage). This hyperlink also contains instructions on how to **ACTIVATE** the extension after it is installed.
+This repository uses Git LFS extension to facilitate version control of large asset files in this project. **BEFORE YOU CLONE** this repository, you must install, the Git LFS addon using your system's package manager or by downloading it directly as described [here](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage). This hyperlink also contains instructions on how to verify if the extension works correctly.
 
 Once Git LFS works on your system, please clone the repository to your ROS 2 workspace:
 ```bash
