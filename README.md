@@ -6,7 +6,7 @@ Unity simulation environment for AGH Space Systems robotics projects.
 
 ## Getting Started
 
-This repository uses Git LFS extension to facilitate version control of large asset files in this project. **BEFORE YOU CLONE** this repository, you must install, the Git LFS addon using your system's package manager or by downloading it directly as described [here](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage). This hyperlink also contains instructions on how to verify if the extension works correctly.
+This repository uses Git LFS extension to facilitate version control of large asset files in this project. **BEFORE YOU CLONE** this repository, you must install the Git LFS addon using your system's package manager or by downloading it directly as described [here](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage). This hyperlink also contains instructions on how to verify if the extension works correctly.
 
 Once Git LFS works on your system, please clone the repository to your ROS 2 workspace:
 ```bash
@@ -28,7 +28,9 @@ You need to install this version of Unity on your system. Start by installing Un
 ros2 launch unity_sim unity_sim.launch.py
 ```
 
-On the first run, the project will take a while to start, because it needs to download some packages from the internet and import all the assets. Subsequent runs however will be much faster. Unity might still take up to a dozen of seconds to start, so you can always use the above command to run the simulation in a separate terminal window, while you continue to restart your robot code in another.
+On the first run, the project will take a while to start, because it needs to download some packages from the web and import all the assets. Subsequent runs however will be much faster. Unity might still take up to a dozen of seconds to start, so you can always use the above command to run the simulation in a separate terminal window, while you continue to restart your robot code in another.
+
+If you wish to upgrade the simulation to a newer version of Unity, please launch it using the Unity Hub. The project directory is located [here](./unity_project/unity_sim) and will need to be manually selected in the Unity Hub.
 
 ## IMU Simulation
 
@@ -36,7 +38,7 @@ The simulation provides a virtual IMU sensor. It is a standalone [C# script](./u
 
 ## How RealSense Cameras are Simulated
 
-In Unity each RealSense is a prefab composed of a single `GameObject` that contains a camera and the control script. The script renders the camera at a set rate and applies a shader that embeds the depth information in the alpha channel of the image. When a frame is available, it is read by the script onto the CPU, and from there [native C++ code](./unity_sim/unity_rs_publisher_plugin/) in invoked that sends the unmodified binary buffer over a Unix socket to the `unity_rs_publisher` ROS node. The node generates point clouds, image messages and publishes all this data. Camera info is published by Unity itself over ROS Bridge.
+In Unity each RealSense is a prefab composed of a single `GameObject` that contains a camera and the control script. The script renders the camera at a set rate and applies a shader that embeds the depth information in the alpha channel of the image. When a frame is available, it is read by the script onto the CPU, and from there [native C++ code](./unity_sim/unity_rs_publisher_plugin/) in invoked that sends the unmodified binary buffer over a Unix socket to the `unity_rs_publisher` ROS node. The node generates point clouds, image messages, camera info and publishes all this data. Importantly, the node subscribes to `{camera}/unity_rs_publisher/meta` topics to receive the cameras' configurations. Only then the node has all the required information to generate its own messages. 
 
 ## RealSense Publisher Plugin Development
 
