@@ -1,13 +1,11 @@
 import glob
 import os
 import sys
-import subprocess
-import shutil
 from setuptools import find_packages, setup
 
 package_name = "unity_sim"
 pkg_dir = os.path.abspath(sys.path[0])
-unity_project_dir = pkg_dir
+unity_project_dir = os.path.abspath(os.path.join(pkg_dir, "..", "unity_project"))
 
 # This is a 🕵️ hack 🕵️ that allows us to find the root of the source directory during runtime.
 # Save current source path to a temporary data file.

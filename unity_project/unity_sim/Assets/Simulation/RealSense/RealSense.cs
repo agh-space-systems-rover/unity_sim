@@ -45,15 +45,6 @@ public class RealSense : MonoBehaviour
 
     private async void Start()
     {
-        // Matrix4x4 rosToUnity = Matrix4x4.identity;
-        // // 0, -1, 0 // Ros +Y is Unity -X (left) (second column)
-        // // 0,  0, 1 // Ros +Z is Unity +Y (up) (third column)
-        // // 1,  0, 0 // Ros +X is Unity +Z (forward) (first column)
-        // rosToUnity.SetColumn(0, new Vector4(0, 0, 1, 0));
-        // rosToUnity.SetColumn(1, new Vector4(-1, 0, 0, 0));
-        // rosToUnity.SetColumn(2, new Vector4(0, 1, 0, 0));
-        // Matrix4x4 unityToRos = rosToUnity.inverse;
-
         // camera settings
         cam = GetComponent<Camera>();
         cam.enabled = true;
@@ -81,7 +72,6 @@ public class RealSense : MonoBehaviour
         rosViewToGlView.SetColumn(2, new Vector4(0, 1, 0, 0));
 
         Matrix4x4 glViewToGlNdc = cam.nonJitteredProjectionMatrix;
-        Matrix4x4 depth_GlViewToGlNdc = Matrix4x4.Perspective(vFov, width / (float)height, depthMin, depthMax);
         Matrix4x4 glNDCToGlUv = Matrix4x4.identity; // the standard "* 0.5 + 0.5" transform
         glNDCToGlUv.SetRow(0, new Vector4(0.5F, 0, 0, 0.5F));
         glNDCToGlUv.SetRow(1, new Vector4(0, 0.5F, 0, 0.5F));
@@ -92,15 +82,12 @@ public class RealSense : MonoBehaviour
         glUvToPixel.SetRow(1, new Vector4(0, -height, 0, height));
 
         Matrix4x4 rosOpticalToPixel = glUvToPixel * glNDCToGlUv * glViewToGlNdc * rosViewToGlView * rosOpticalToRosView;
-        Matrix4x4 depth_RosOpticalToPixel = glUvToPixel * glNDCToGlUv * depth_GlViewToGlNdc * rosViewToGlView * rosOpticalToRosView;
 
         // depth shader
         Shader depthShader = Shader.Find("Custom/DepthTextureShader");
         depthMaterial = new Material(depthShader);
-        // depthMaterial.SetFloat("_DepthMin", depthMin);
-        // depthMaterial.SetFloat("_DepthMax", depthMax);
-        depthMaterial.SetMatrix("_InvProj", glViewToGlNdc.inverse);
-        depthMaterial.SetMatrix("_DepthProj", depth_GlViewToGlNdc);
+        depthMaterial.SetFloat("_DepthMin", depthMin);
+        depthMaterial.SetFloat("_DepthMax", depthMax);
 
         // async capture
         asyncRt = new RenderTexture(width, height, 0);
@@ -115,8 +102,7 @@ public class RealSense : MonoBehaviour
 
         // ROS
         var ros = new ROS();
-        Publisher<ROSBridge.SensorMsgs.CameraInfo> colorInfoPublisher = await ros.CreatePublisher<ROSBridge.SensorMsgs.CameraInfo>("/" + id + "/color/camera_info");
-        Publisher<ROSBridge.SensorMsgs.CameraInfo> depthInfoPublisher = await ros.CreatePublisher<ROSBridge.SensorMsgs.CameraInfo>("/" + id + "/depth/camera_info");
+        var unityRsPublisherMetaPub = await ros.CreatePublisher<ROSBridge.UnityRSPublisherMsgs.CameraMetadata>("/" + id + "/unity_rs_publisher/meta");
         OpenBridgeConnection(id, width, height, vFov, depthMin, depthMax);
 
         // Use a custom update loop to guarantee resource destruction.
@@ -176,80 +162,18 @@ public class RealSense : MonoBehaviour
                         TryPushFrame(id, NativeArrayUnsafeUtility.GetUnsafePtr(buffer));
                     }
 
-                    // Publish color info
-                    var stamp = ROSBridge.BuiltinInterfaces.Time.Current();
-                    await colorInfoPublisher.Publish(
-                        new ROSBridge.SensorMsgs.CameraInfo
-                        {
-                            Header = new ROSBridge.StdMsgs.Header
-                            {
-                                Stamp = stamp,
-                                FrameId = id + "_color_optical_frame"
-                            },
-                            Height = (uint)height,
-                            Width = (uint)width,
-                            DistortionModel = "plumb_bob",
-                            D = new double[] { 0, 0, 0, 0, 0 },
-                            K = new double[] {
-                                rosOpticalToPixel[0, 0], rosOpticalToPixel[0, 1], rosOpticalToPixel[0, 2],
-                                rosOpticalToPixel[1, 0], rosOpticalToPixel[1, 1], rosOpticalToPixel[1, 2],
-                                rosOpticalToPixel[2, 0], rosOpticalToPixel[2, 1], rosOpticalToPixel[2, 2]
-                            },
-                            R = new double[] { 1, 0, 0, 0, 1, 0, 0, 0, 1 },
-                            P = new double[] {
-                                rosOpticalToPixel[0, 0], rosOpticalToPixel[0, 1], rosOpticalToPixel[0, 2], rosOpticalToPixel[0, 3],
-                                rosOpticalToPixel[1, 0], rosOpticalToPixel[1, 1], rosOpticalToPixel[1, 2], rosOpticalToPixel[1, 3],
-                                rosOpticalToPixel[2, 0], rosOpticalToPixel[2, 1], rosOpticalToPixel[2, 2], rosOpticalToPixel[2, 3]
-                            },
-                            BinningX = 0,
-                            BinningY = 0,
-                            ROI = new ROSBridge.SensorMsgs.RegionOfInterest
-                            {
-                                XOffset = 0,
-                                YOffset = 0,
-                                Height = 0,
-                                Width = 0,
-                                DoRectify = false
-                            }
-                        }
-                    );
-
-                    // Publish depth info
-                    await depthInfoPublisher.Publish(
-                        new ROSBridge.SensorMsgs.CameraInfo
-                        {
-                            Header = new ROSBridge.StdMsgs.Header
-                            {
-                                Stamp = stamp,
-                                FrameId = id + "_depth_optical_frame"
-                            },
-                            Height = (uint)height,
-                            Width = (uint)width,
-                            DistortionModel = "plumb_bob",
-                            D = new double[] { 0, 0, 0, 0, 0 },
-                            K = new double[] {
-                                depth_RosOpticalToPixel[0, 0], depth_RosOpticalToPixel[0, 1], depth_RosOpticalToPixel[0, 2],
-                                depth_RosOpticalToPixel[1, 0], depth_RosOpticalToPixel[1, 1], depth_RosOpticalToPixel[1, 2],
-                                depth_RosOpticalToPixel[2, 0], depth_RosOpticalToPixel[2, 1], depth_RosOpticalToPixel[2, 2]
-                            },
-                            R = new double[] { 1, 0, 0, 0, 1, 0, 0, 0, 1 },
-                            P = new double[] {
-                                depth_RosOpticalToPixel[0, 0], depth_RosOpticalToPixel[0, 1], depth_RosOpticalToPixel[0, 2], depth_RosOpticalToPixel[0, 3],
-                                depth_RosOpticalToPixel[1, 0], depth_RosOpticalToPixel[1, 1], depth_RosOpticalToPixel[1, 2], depth_RosOpticalToPixel[1, 3],
-                                depth_RosOpticalToPixel[2, 0], depth_RosOpticalToPixel[2, 1], depth_RosOpticalToPixel[2, 2], depth_RosOpticalToPixel[2, 3]
-                            },
-                            BinningX = 0,
-                            BinningY = 0,
-                            ROI = new ROSBridge.SensorMsgs.RegionOfInterest
-                            {
-                                XOffset = 0,
-                                YOffset = 0,
-                                Height = 0,
-                                Width = 0,
-                                DoRectify = false
-                            }
-                        }
-                    );
+                    // Publish depth min and depth max for unity_rs_publisher.
+                    await unityRsPublisherMetaPub.Publish(new ROSBridge.UnityRSPublisherMsgs.CameraMetadata
+                    {
+                        Width = width,
+                        Height = height,
+                        DepthMin = depthMin,
+                        DepthMax = depthMax,
+                        Fx = rosOpticalToPixel[0, 0],
+                        Fy = rosOpticalToPixel[1, 1],
+                        Cx = rosOpticalToPixel[0, 2],
+                        Cy = rosOpticalToPixel[1, 2]
+                    });
                 }
             }
         }

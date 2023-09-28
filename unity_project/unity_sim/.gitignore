@@ -1,0 +1,10 @@
+# Unity generated
+/Library
+/Logs
+/Temp
+
+# Mono crashlogs
+/mono_crash.*.blob
+
+# Generic logfiles
+*.log

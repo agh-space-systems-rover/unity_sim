@@ -12,10 +12,11 @@
 #include <rclcpp/rclcpp.hpp>
 #include <image_transport/image_transport.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <unity_rs_publisher_msgs/msg/camera_metadata.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <cv_bridge/cv_bridge.h>
 
-constexpr size_t point_cloud_height = 72;
+constexpr size_t point_cloud_height = 144;
 constexpr float frame_time_smoothing = 0.9;
 constexpr float frame_time_log_interval = 5;
 
@@ -26,10 +27,11 @@ std::shared_ptr<image_transport::ImageTransport> ros_it;
 // Function to handle client messages
 void handle_client(int client_socket, std::string client_id, size_t data_size) {
     // Create publishers for this client.
-    image_transport::Publisher aligned_depth_to_color_pub, color_pub, depth_pub;
+    rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr aligned_depth_to_color_info_pub, color_info_pub;
+    image_transport::Publisher aligned_depth_to_color_pub, color_pub;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr points_pub;
-    rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr depth_info_sub;
-    std::optional<sensor_msgs::msg::CameraInfo> depth_info;
+    rclcpp::Subscription<unity_rs_publisher_msgs::msg::CameraMetadata>::SharedPtr meta_sub;
+    std::optional<unity_rs_publisher_msgs::msg::CameraMetadata> meta;
     {
         std::unique_lock ros_lock(ros_mutex);
 
@@ -38,24 +40,26 @@ void handle_client(int client_socket, std::string client_id, size_t data_size) {
         // Create a publishers for this client.
         // See: https://github.com/IntelRealSense/realsense-ros
         //
-        // - no aligned_depth_to_color info
-        // - no aligned_depth_to_color images
-        // - color info handled by Unity
+        aligned_depth_to_color_info_pub = ros_node->create_publisher<sensor_msgs::msg::CameraInfo>("/" + client_id + "/aligned_depth_to_color/camera_info", 1);
+        aligned_depth_to_color_pub = ros_it->advertise("/" + client_id + "/aligned_depth_to_color/image_raw", 1);
+        color_info_pub = ros_node->create_publisher<sensor_msgs::msg::CameraInfo>("/" + client_id + "/color/camera_info", 1);
         color_pub = ros_it->advertise("/" + client_id + "/color/image_raw", 1);
         // - no color metadata
-        // - depth info handled by Unity
+        // - depth info same as color
         points_pub = ros_node->create_publisher<sensor_msgs::msg::PointCloud2>("/" + client_id + "/depth/color/points", 1);
-        depth_pub = ros_it->advertise("/" + client_id + "/depth/image_rect_raw", 1);
+        // - no depth camera_info
+        // - no depth images
         // - no depth metadata
         // - no depth_to_color extrinsics
         // - no IMU; TODO: Handle in Unity?
         // - no diagnostics, parameter_events, rosout, tf_static, etc.
 
-        // Subscribe to depth info to generate point clouds.
-        depth_info_sub = ros_node->create_subscription<sensor_msgs::msg::CameraInfo>(
-            "/" + client_id + "/depth/camera_info", 10,
-            [&](const sensor_msgs::msg::CameraInfo::SharedPtr msg) {
-                depth_info = *msg;
+        // Subscribe to Unity camera metadata to know the dimensions and depth bounds.
+        meta_sub = ros_node->create_subscription<unity_rs_publisher_msgs::msg::CameraMetadata>(
+            "/" + client_id + "/unity_rs_publisher/meta",
+            1,
+            [&meta](const unity_rs_publisher_msgs::msg::CameraMetadata::SharedPtr msg) {
+                meta = *msg;
             }
         );
 
@@ -65,8 +69,10 @@ void handle_client(int client_socket, std::string client_id, size_t data_size) {
     // persistent buffers
     std::vector<uint8_t> data(data_size);
     sensor_msgs::msg::Image color, depth;
+    cv::Mat depth_image_8bit;
     // std::vector<uint8_t> point_cloud;
     sensor_msgs::msg::PointCloud2 point_cloud;
+    sensor_msgs::msg::CameraInfo camera_info;
 
     std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
     float frame_time_smooth = 0;
@@ -89,51 +95,58 @@ void handle_client(int client_socket, std::string client_id, size_t data_size) {
             // Reset the number of bytes received
             data_received = 0;
 
-            // Skip frame if no camera info was yet received.
-            if (!depth_info.has_value()) {
+            // Skip frame if no camera metadata was yet received.
+            if (!meta.has_value()) {
                 std::unique_lock ros_lock(ros_mutex);
                 rclcpp::spin_some(ros_node);
                 continue;
             }
 
             // Extract properties from camera info.
-            uint32_t width = depth_info->width;
-            uint32_t height = depth_info->height;
-            cv::Matx44f proj(
-                depth_info->p[0], depth_info->p[1], depth_info->p[2], depth_info->p[3],
-                depth_info->p[4], depth_info->p[5], depth_info->p[6], depth_info->p[7],
-                depth_info->p[8], depth_info->p[9], depth_info->p[10], depth_info->p[11],
-                0, 0, 1, 0
-            );
-            cv::Matx44f proj_inv = proj.inv();
+            uint32_t width = meta->width;
+            uint32_t height = meta->height;
+            float depth_min = meta->depth_min;
+            float depth_max = meta->depth_max;
+            auto ros_now = rclcpp::Clock().now();
+            
+            // Initialize 8-bit depth CV Mat.
+            depth_image_8bit.create(height, width, CV_8UC1);
 
-            // Split data into color and depth.
-            color.data.resize(data.size() / 4 * 3);
-            depth.data.resize(data.size() / 4);
-            for (uint32_t row = 0; row < height; row++) {
-                uint32_t row_flip = height - row - 1;
-                for (uint32_t col = 0; col < width; col++) {
-                    uint32_t i = row * width + col;
-                    uint32_t i_flip = row_flip * width + col; // index of the corresponding pixel in a vertically flipped image
+            // Initialize color and depth images.
+            color.data.resize(data.size() / 4 * 3); // 3 channels * 8-bit depth
+            depth.data.resize(data.size() / 4 * 2); // 1 channel * 16-bit depth
 
-                    color.data[i_flip * 3 + 0] = data[i * 4 + 0];
-                    color.data[i_flip * 3 + 1] = data[i * 4 + 1];
-                    color.data[i_flip * 3 + 2] = data[i * 4 + 2];
+            // Create OpenCV wrappers for color and depth data.
+            cv::Mat color_mat(height, width, CV_8UC3, color.data.data());
+            cv::Mat depth_mat(height, width, CV_16UC1, depth.data.data());
+    
+            // Prepare OpenCV Mat for RGBA data
+            cv::Mat rgba_image(height, width, CV_8UC4, const_cast<uint8_t*>(data.data()));
 
-                    depth.data[i_flip] = data[i * 4 + 3];
-                }
-            }
+            // Split RGBA into color and depth using OpenCV
+            cv::cvtColor(rgba_image, color_mat, cv::COLOR_RGBA2RGB);
+            cv::extractChannel(rgba_image, depth_image_8bit, 3);
+
+            // Convert depth to 16-bit
+            depth_image_8bit.convertTo(depth_mat, CV_16UC1, 1000.0F / 255.0F * (depth_max - depth_min));
+
+            // Add depth_min * 1000.0F to all non-zero (valid) pixels.
+            cv::add(depth_mat, cv::Scalar(depth_min * 1000.0F), depth_mat, depth_mat != 0);
+
+            // Flip both images vertically.
+            cv::flip(color_mat, color_mat, 0);
+            cv::flip(depth_mat, depth_mat, 0);
 
             // Initialize the rest of color and depth messages.
             color.header.frame_id = client_id + "_color_optical_frame";
-            depth.header.frame_id = client_id + "_depth_optical_frame";
-            color.header.stamp = depth.header.stamp = rclcpp::Clock().now();
+            depth.header.frame_id = client_id + "_color_optical_frame"; // aligned to color
+            color.header.stamp = depth.header.stamp = ros_now;
             color.width = depth.width = width;
             color.height = depth.height = height;
-            color.step = width * 3;
-            depth.step = width;
+            color.step = width * 3; // 3 channels * 8-bit depth
+            depth.step = width * 2; // 1 channel * 16-bit depth
             color.encoding = "rgb8";
-            depth.encoding = "mono8";
+            depth.encoding = "mono16";
 
             // Generate point cloud.
             size_t point_cloud_width = static_cast<float>(width) / height * point_cloud_height;
@@ -148,32 +161,34 @@ void handle_client(int client_socket, std::string client_id, size_t data_size) {
                         continue;
                     }
 
-                    uint8_t src_depth = depth.data[src_row * width + src_col];
+                    uint8_t src_depth_low = depth.data[(src_row * width + src_col) * 2 + 0];
+                    uint8_t src_depth_high = depth.data[(src_row * width + src_col) * 2 + 1];
+                    uint32_t src_depth = static_cast<uint32_t>(src_depth_high) << 8 | src_depth_low;
                     uint32_t src_r = color.data[(src_row * width + src_col) * 3 + 0];
                     uint32_t src_g = color.data[(src_row * width + src_col) * 3 + 1];
                     uint32_t src_b = color.data[(src_row * width + src_col) * 3 + 2];
 
-                    if (src_depth != 0 && src_depth != 255) {
+                    if (src_depth != 0) {
                         size_t i = point_cloud.data.size();
                         point_cloud.data.resize(point_cloud.data.size() + 16);
 
-                        // Use inverse projection matrix to calculate point coordinates.
-                        cv::Vec4f point = proj_inv * cv::Vec4f(src_col, src_row, src_depth / 255.0F, 1);
-                        point /= point[3];
+                        float z = src_depth / 1000.0F;
+                        float x = (src_col - meta->cx) * z / meta->fx;
+                        float y = (src_row - meta->cy) * z / meta->fy;
                         uint32_t rgb = (src_r & 0xff) << 16 | (src_g & 0xff) << 8 | (src_b & 0xff);
                         
                         // Add a point to the buffer.
-                        *reinterpret_cast<float *>(&point_cloud.data[i + 0]) = point[0];
-                        *reinterpret_cast<float *>(&point_cloud.data[i + 4]) = point[1];
-                        *reinterpret_cast<float *>(&point_cloud.data[i + 8]) = point[2];
+                        *reinterpret_cast<float *>(&point_cloud.data[i + 0]) = x;
+                        *reinterpret_cast<float *>(&point_cloud.data[i + 4]) = y;
+                        *reinterpret_cast<float *>(&point_cloud.data[i + 8]) = z;
                         *reinterpret_cast<uint32_t *>(&point_cloud.data[i + 12]) = rgb;
                     }
                 }
             }
 
             // Initialize the rest of the point cloud message.
-            point_cloud.header.frame_id = client_id + "_depth_optical_frame";
-            point_cloud.header.stamp = rclcpp::Clock().now();
+            point_cloud.header.frame_id = client_id + "_color_optical_frame";
+            point_cloud.header.stamp = ros_now;
             point_cloud.height = 1;
             point_cloud.width = point_cloud.data.size() / 16;
             point_cloud.fields.resize(4);
@@ -198,11 +213,39 @@ void handle_client(int client_socket, std::string client_id, size_t data_size) {
             point_cloud.row_step = point_cloud.data.size();
             point_cloud.is_dense = true;
 
+            // Compose camera info message.
+            camera_info.header.frame_id = client_id + "_color_optical_frame";
+            camera_info.header.stamp = ros_now;
+            camera_info.height = height;
+            camera_info.width = width;
+            camera_info.distortion_model = "plumb_bob";
+            camera_info.d = {0, 0, 0, 0, 0};
+            camera_info.k = {
+                meta->fx, 0, meta->cx,
+                0, meta->fy, meta->cy,
+                0, 0, 1
+            };
+            camera_info.r = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+            camera_info.p = {
+                meta->fx, 0, meta->cx, 0,
+                0, meta->fy, meta->cy, 0,
+                0, 0, 1, 0
+            };
+            camera_info.binning_x = 0;
+            camera_info.binning_y = 0;
+            camera_info.roi.x_offset = 0;
+            camera_info.roi.y_offset = 0;
+            camera_info.roi.height = 0;
+            camera_info.roi.width = 0;
+            camera_info.roi.do_rectify = false;
+
             // Publish.
             {
                 std::unique_lock ros_lock(ros_mutex);
+                aligned_depth_to_color_info_pub->publish(camera_info);
+                aligned_depth_to_color_pub.publish(depth);
+                color_info_pub->publish(camera_info);
                 color_pub.publish(color);
-                depth_pub.publish(depth);
                 points_pub->publish(point_cloud);
                 rclcpp::spin_some(ros_node);
             }

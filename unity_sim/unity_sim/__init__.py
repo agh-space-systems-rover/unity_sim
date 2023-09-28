@@ -8,7 +8,9 @@ import ament_index_python
 
 def find_unity_version(project_dir: str):
     # Read the version of the Unity project from ""./ProjectSettings/ProjectVersion.txt".
-    with open(os.path.join(project_dir, "ProjectSettings/ProjectVersion.txt")) as f:
+    with open(
+        os.path.join(project_dir, "unity_sim/ProjectSettings/ProjectVersion.txt")
+    ) as f:
         content = f.read()
         i = "".join(content).find("m_EditorVersion: ")
         if i == -1:
@@ -40,9 +42,7 @@ class UnitySim(rclpy.node.Node):
         )
 
         # Check if Native Plugin is installed and build it if it isn't.
-        plugin_asset_path = (
-            f"{project_dir}/Assets/Simulation/RealSense/UnityRSPublisherPlugin.so"
-        )
+        plugin_asset_path = f"{project_dir}/unity_sim/Assets/Simulation/RealSense/UnityRSPublisherPlugin.so"
         native_plugin_dir = os.path.abspath(project_dir + "/unity_rs_publisher_plugin")
         if not os.path.exists(plugin_asset_path):
             self.get_logger().info("Native plugin not found. Building it now...")
@@ -92,7 +92,7 @@ class UnitySim(rclpy.node.Node):
         # Find the scene to run.
         scene = self.get_parameter("scene").get_parameter_value().string_value
         scene_path = os.path.normpath(
-            f"{project_dir}/Assets/Simulation/Scenes/{scene}.unity"
+            f"{project_dir}/unity_sim/Assets/Simulation/Scenes/{scene}.unity"
         )
 
         # Prepare the command.

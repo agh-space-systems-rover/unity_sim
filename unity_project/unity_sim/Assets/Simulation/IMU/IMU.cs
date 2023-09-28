@@ -93,6 +93,25 @@ public class IMU : MonoBehaviour
         acc.y += gravity; // gravity compensation
         acc = transform.InverseTransformDirection(acc); // make acceleration local to the sensor
 
+        Matrix4x4 rosToUnity = Matrix4x4.identity;
+        // 0, -1, 0 // Ros +Y is Unity -X (left) (second column)
+        // 0,  0, 1 // Ros +Z is Unity +Y (up) (third column)
+        // 1,  0, 0 // Ros +X is Unity +Z (forward) (first column)
+        rosToUnity.SetColumn(0, new Vector4(0, 0, 1, 0));
+        rosToUnity.SetColumn(1, new Vector4(-1, 0, 0, 0));
+        rosToUnity.SetColumn(2, new Vector4(0, 1, 0, 0));
+        Matrix4x4 unityToRos = rosToUnity.inverse;
+
+        Matrix4x4 angPosMat = Matrix4x4.Rotate(angPos);
+        angPosMat = unityToRos * angPosMat * rosToUnity;
+        angPos = angPosMat.rotation;
+
+        Matrix4x4 angVelMat = Matrix4x4.Rotate(angVel);
+        angVelMat = unityToRos * angVelMat * rosToUnity;
+        angVel = angVelMat.rotation;
+
+        acc = unityToRos.MultiplyVector(acc);
+
         await imuPublisher.Publish(new ROSBridge.SensorMsgs.Imu
         {
             Header = new ROSBridge.StdMsgs.Header
@@ -102,24 +121,24 @@ public class IMU : MonoBehaviour
             },
             Orientation = new ROSBridge.GeometryMsgs.Quaternion
             {
-                X = -angPos.z,
-                Y = angPos.x,
-                Z = -angPos.y,
+                X = angPos.x,
+                Y = angPos.y,
+                Z = angPos.z,
                 W = angPos.w
             },
             OrientationCovariance = covariance,
             AngularVelocity = new ROSBridge.GeometryMsgs.Vector3
             {
-                X = -toNormalizedRad(angVel.eulerAngles.z),  // roll
-                Y = toNormalizedRad(angVel.eulerAngles.x), // pitch
-                Z = -toNormalizedRad(angVel.eulerAngles.y)   // yaw
+                X = toNormalizedRad(angVel.eulerAngles.x), // roll
+                Y = toNormalizedRad(angVel.eulerAngles.y), // pitch
+                Z = toNormalizedRad(angVel.eulerAngles.z)  // yaw
             },
             AngularVelocityCovariance = covariance,
             LinearAcceleration = new ROSBridge.GeometryMsgs.Vector3
             {
-                X = acc.z,
-                Y = -acc.x,
-                Z = acc.y
+                X = acc.x,
+                Y = acc.y,
+                Z = acc.z
             },
             LinearAccelerationCovariance = covariance
         });
