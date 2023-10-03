@@ -74,9 +74,9 @@ void handle_client(int client_socket, std::string client_id, size_t data_size) {
     sensor_msgs::msg::PointCloud2 point_cloud;
     sensor_msgs::msg::CameraInfo camera_info;
 
-    std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-    float frame_time_smooth = 0;
-    float frame_time_log_countdown = frame_time_log_interval;
+    // std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+    // float frame_time_smooth = 0;
+    // float frame_time_log_countdown = frame_time_log_interval;
     size_t data_received = 0;
     while (true) {
         // Receive data from the client
@@ -107,7 +107,6 @@ void handle_client(int client_socket, std::string client_id, size_t data_size) {
             uint32_t height = meta->height;
             float depth_min = meta->depth_min;
             float depth_max = meta->depth_max;
-            auto ros_now = rclcpp::Clock().now();
             
             // Initialize 8-bit depth CV Mat.
             depth_image_8bit.create(height, width, CV_8UC1);
@@ -140,7 +139,6 @@ void handle_client(int client_socket, std::string client_id, size_t data_size) {
             // Initialize the rest of color and depth messages.
             color.header.frame_id = client_id + "_color_optical_frame";
             depth.header.frame_id = client_id + "_color_optical_frame"; // aligned to color
-            color.header.stamp = depth.header.stamp = ros_now;
             color.width = depth.width = width;
             color.height = depth.height = height;
             color.step = width * 3; // 3 channels * 8-bit depth
@@ -188,7 +186,6 @@ void handle_client(int client_socket, std::string client_id, size_t data_size) {
 
             // Initialize the rest of the point cloud message.
             point_cloud.header.frame_id = client_id + "_color_optical_frame";
-            point_cloud.header.stamp = ros_now;
             point_cloud.height = 1;
             point_cloud.width = point_cloud.data.size() / 16;
             point_cloud.fields.resize(4);
@@ -215,7 +212,6 @@ void handle_client(int client_socket, std::string client_id, size_t data_size) {
 
             // Compose camera info message.
             camera_info.header.frame_id = client_id + "_color_optical_frame";
-            camera_info.header.stamp = ros_now;
             camera_info.height = height;
             camera_info.width = width;
             camera_info.distortion_model = "plumb_bob";
@@ -242,6 +238,13 @@ void handle_client(int client_socket, std::string client_id, size_t data_size) {
             // Publish.
             {
                 std::unique_lock ros_lock(ros_mutex);
+
+                auto ros_now = ros_node->now();
+                color.header.stamp = ros_now;
+                depth.header.stamp = ros_now;
+                point_cloud.header.stamp = ros_now;
+                camera_info.header.stamp = ros_now;
+
                 aligned_depth_to_color_info_pub->publish(camera_info);
                 aligned_depth_to_color_pub.publish(depth);
                 color_info_pub->publish(camera_info);
@@ -250,17 +253,17 @@ void handle_client(int client_socket, std::string client_id, size_t data_size) {
                 rclcpp::spin_some(ros_node);
             }
 
-            // Measure frame time.
-            float frame_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - now).count() / 1000.0F;
-            now = std::chrono::steady_clock::now();
-            frame_time_smooth = frame_time_smooth * frame_time_smoothing + frame_time * (1 - frame_time_smoothing);
+            // // Measure frame time.
+            // float frame_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - now).count() / 1000.0F;
+            // now = std::chrono::steady_clock::now();
+            // frame_time_smooth = frame_time_smooth * frame_time_smoothing + frame_time * (1 - frame_time_smoothing);
 
-            // Log frame time.
-            frame_time_log_countdown -= frame_time;
-            if (frame_time_log_countdown <= 0) {
-                RCLCPP_INFO(ros_node->get_logger(), "Client %s frame time: %d ms", client_id.c_str(), static_cast<int>(frame_time_smooth * 1000));
-                frame_time_log_countdown = frame_time_log_interval;
-            }
+            // // Log frame time.
+            // frame_time_log_countdown -= frame_time;
+            // if (frame_time_log_countdown <= 0) {
+            //     RCLCPP_INFO(ros_node->get_logger(), "Client %s frame time: %d ms", client_id.c_str(), static_cast<int>(frame_time_smooth * 1000));
+            //     frame_time_log_countdown = frame_time_log_interval;
+            // }
         }
     }
 }

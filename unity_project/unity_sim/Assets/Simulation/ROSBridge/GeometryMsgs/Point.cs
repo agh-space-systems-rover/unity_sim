@@ -2,11 +2,10 @@ using Newtonsoft.Json;
 
 namespace ROSBridge.GeometryMsgs
 {
-
-    public struct Quaternion
+    public struct Point
     {
         [JsonIgnore]
-        public static readonly string ROSMessageType = "geometry_msgs/msg/Quaternion";
+        public static readonly string ROSMessageType = "geometry_msgs/msg/Point";
 
         [JsonProperty("x")]
         public double X { get; set; }
@@ -16,9 +15,5 @@ namespace ROSBridge.GeometryMsgs
 
         [JsonProperty("z")]
         public double Z { get; set; }
-
-        [JsonProperty("w")]
-        public double W { get; set; }
     }
-
 }

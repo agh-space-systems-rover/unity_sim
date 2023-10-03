@@ -14,7 +14,7 @@ namespace ROSBridge.BuiltinInterfaces
         [JsonProperty("nanosec")]
         public uint Nanosec { get; set; }
 
-        public static Time Current()
+        public static Time Realtime(double offsetSeconds)
         {
             // If this is the first time this method is called, initialize the
             // stopwatch.
@@ -31,10 +31,22 @@ namespace ROSBridge.BuiltinInterfaces
             long gameNanosSinceInit = (long)((UnityEngine.Time.unscaledTimeAsDouble - gameTimeAtInit) * 1000000000.0);
             long nanoOffset = additionalNanosAtInit + gameNanosSinceInit;
 
+            // Add the offset.
+            nanoOffset += (long)(offsetSeconds * 1000000000.0);
+
             return new Time
             {
                 Sec = (int)(secondsSinceEpochAtInit + nanoOffset / 1000000000L),
                 Nanosec = (uint)(nanoOffset % 1000000000L)
+            };
+        }
+
+        public static Time Simulated()
+        {
+            return new Time
+            {
+                Sec = (int)UnityEngine.Time.time,
+                Nanosec = (uint)(UnityEngine.Time.time * 1000000000.0 % 1000000000.0)
             };
         }
 
