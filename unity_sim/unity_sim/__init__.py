@@ -25,7 +25,7 @@ def find_unity_version(project_dir: str):
 class UnitySim(rclpy.node.Node):
     def __init__(self):
         super().__init__("unity_sim")
-        self.declare_parameter("scene", "Testing")
+        self.declare_parameter("scene", "Marsyard")
 
         # Find paths.
         with open(

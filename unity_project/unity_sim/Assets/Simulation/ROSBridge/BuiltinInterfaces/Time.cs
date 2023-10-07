@@ -14,7 +14,7 @@ namespace ROSBridge.BuiltinInterfaces
         [JsonProperty("nanosec")]
         public uint Nanosec { get; set; }
 
-        public static Time Realtime(double offsetSeconds)
+        public static Time Realtime(double offsetSeconds = 0.0)
         {
             // If this is the first time this method is called, initialize the
             // stopwatch.

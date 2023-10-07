@@ -48,4 +48,3 @@ MonoBehaviour:
   topic: /imu/data
   frequency: 60
   gravity: 9.81
-  stampOffset: 0.04

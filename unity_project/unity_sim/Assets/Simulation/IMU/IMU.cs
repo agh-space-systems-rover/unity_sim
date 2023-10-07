@@ -20,10 +20,6 @@ public class IMU : MonoBehaviour
     [SerializeField]
     private float gravity = 9.81f;
 
-    [SerializeField]
-    private double stampOffset = 0.04;
-
-
     private Vector3 prevPos;
     private Vector3 prevVel;
     private Vector3 prevAcc;
@@ -119,7 +115,7 @@ public class IMU : MonoBehaviour
         {
             Header = new ROSBridge.StdMsgs.Header
             {
-                Stamp = ROSBridge.BuiltinInterfaces.Time.Realtime(stampOffset),
+                Stamp = ROSBridge.BuiltinInterfaces.Time.Realtime(),
                 FrameId = frameId
             },
             Orientation = new ROSBridge.GeometryMsgs.Quaternion

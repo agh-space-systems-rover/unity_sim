@@ -107,20 +107,26 @@ void handle_client(int client_socket, std::string client_id, size_t data_size) {
             uint32_t height = meta->height;
             float depth_min = meta->depth_min;
             float depth_max = meta->depth_max;
+
+            // Extract timestamp from the first 8 bytes of the frame buffer.
+            int32_t sec = *(int32_t *)data.data();
+            uint32_t nanosec = *(uint32_t *)(data.data() + 4);
             
             // Initialize 8-bit depth CV Mat.
             depth_image_8bit.create(height, width, CV_8UC1);
 
             // Initialize color and depth images.
-            color.data.resize(data.size() / 4 * 3); // 3 channels * 8-bit depth
-            depth.data.resize(data.size() / 4 * 2); // 1 channel * 16-bit depth
+            // -8 to account for timestamp at the start of the frame buffer
+            color.data.resize((data.size() - 8) / 4 * 3); // 3 channels * 8-bit depth
+            depth.data.resize((data.size() - 8) / 4 * 2); // 1 channel * 16-bit depth
 
             // Create OpenCV wrappers for color and depth data.
             cv::Mat color_mat(height, width, CV_8UC3, color.data.data());
             cv::Mat depth_mat(height, width, CV_16UC1, depth.data.data());
     
             // Prepare OpenCV Mat for RGBA data
-            cv::Mat rgba_image(height, width, CV_8UC4, const_cast<uint8_t*>(data.data()));
+            cv::Mat rgba_image(height, width, CV_8UC4, const_cast<uint8_t*>(data.data() + 8));
+            // +8 to skip timestamp at the start of the frame buffer
 
             // Split RGBA into color and depth using OpenCV
             cv::cvtColor(rgba_image, color_mat, cv::COLOR_RGBA2RGB);
@@ -239,11 +245,14 @@ void handle_client(int client_socket, std::string client_id, size_t data_size) {
             {
                 std::unique_lock ros_lock(ros_mutex);
 
-                auto ros_now = ros_node->now();
-                color.header.stamp = ros_now;
-                depth.header.stamp = ros_now;
-                point_cloud.header.stamp = ros_now;
-                camera_info.header.stamp = ros_now;
+                builtin_interfaces::msg::Time stamp;
+                stamp.sec = sec;
+                stamp.nanosec = nanosec;
+                
+                color.header.stamp = stamp;
+                depth.header.stamp = stamp;
+                point_cloud.header.stamp = stamp;
+                camera_info.header.stamp = stamp;
 
                 aligned_depth_to_color_info_pub->publish(camera_info);
                 aligned_depth_to_color_pub.publish(depth);

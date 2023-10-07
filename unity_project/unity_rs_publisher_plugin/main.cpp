@@ -69,8 +69,11 @@ API_EXPORT void OpenBridgeConnection(const char *id, int width, int height, floa
 
 			// Send initial handshake message (first 256 bytes)
 			std::vector<uint8_t> buffer(256);
-			*reinterpret_cast<uint32_t *>(buffer.data()) = rs.width * rs.height * 4;
+			// Send frame buffer size in the first 4 bytes of the handshake message.
+			*reinterpret_cast<uint32_t *>(buffer.data()) = 8 + rs.width * rs.height * 4;
+			// Follow up with the camera ID.
 			std::copy(rs.id.begin(), rs.id.end(), buffer.begin() + 4);
+			// Null-terminate the camera ID.
 			buffer[rs.id.size() + 4] = '\0';
 
 			if (send(rs.client_socket, buffer.data(), buffer.size(), 0) == -1) {
@@ -126,7 +129,7 @@ API_EXPORT void CloseBridgeConnection(const char *id) {
     } catch (...) {}
 }
 
-API_EXPORT void TryPushFrame(const char *id, void *ptr) {
+API_EXPORT void TryPushFrame(const char *id, int32_t sec, uint32_t nanosec, void *ptr) {
     try {
         auto &rs = cameras.at(std::string{id});
 		uint8_t *bytes = reinterpret_cast<uint8_t *>(ptr);
@@ -134,8 +137,15 @@ API_EXPORT void TryPushFrame(const char *id, void *ptr) {
 		// Copy data to the buffer.
 		{
 			std::unique_lock<std::mutex> lock(rs.mutex);
-			rs.main_thread_data.resize(rs.width * rs.height * 4);
-			std::copy(bytes, bytes + rs.main_thread_data.size(), rs.main_thread_data.begin());
+			rs.main_thread_data.resize(2 * 4 + rs.width * rs.height * 4);
+			
+			// stamp
+			*reinterpret_cast<int32_t *>(rs.main_thread_data.data()) = sec;
+			*reinterpret_cast<uint32_t *>(rs.main_thread_data.data() + 4) = nanosec;
+
+			// frame data
+			std::copy(bytes, bytes + rs.width * rs.height * 4, rs.main_thread_data.begin() + 8);
+
 			rs.has_frame = true;
 		}
 		

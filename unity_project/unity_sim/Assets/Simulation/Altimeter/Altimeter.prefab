@@ -46,4 +46,3 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   topic: /altimeter/pose
   frequency: 60
-  stampOffset: 0.04

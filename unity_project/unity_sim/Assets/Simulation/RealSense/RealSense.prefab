@@ -102,7 +102,7 @@ MonoBehaviour:
   fps: 30
   vFov: 60
   depthMin: 0.5
-  depthMax: 8
+  depthMax: 5
   id: camera
 --- !u!114 &8795971847790715227
 MonoBehaviour:

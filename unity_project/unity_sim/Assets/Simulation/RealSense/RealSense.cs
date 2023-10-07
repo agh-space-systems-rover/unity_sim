@@ -27,12 +27,13 @@ public class RealSense : MonoBehaviour
     [SerializeField]
     private float depthMin = 0.5F;
     [SerializeField]
-    private float depthMax = 8.0F;
+    private float depthMax = 5.0F;
     [SerializeField]
     private string id = "camera";
 
     private Camera cam;
     bool frameAvailable = false; // Feels a bit smoother than cam.Render()
+    ROSBridge.BuiltinInterfaces.Time frameStamp;
     RenderTexture asyncRt = null;
     Material depthMaterial = null;
 
@@ -41,7 +42,7 @@ public class RealSense : MonoBehaviour
     [DllImport("UnityRSPublisherPlugin")]
     private static extern void CloseBridgeConnection(string id);
     [DllImport("UnityRSPublisherPlugin")]
-    private static unsafe extern void TryPushFrame(string id, void* ptr);
+    private static unsafe extern void TryPushFrame(string id, int sec, uint nanosec, void* ptr);
 
     private async void Start()
     {
@@ -141,6 +142,10 @@ public class RealSense : MonoBehaviour
                     // Copy from asyncRt to syncRt.
                     Graphics.Blit(asyncRt, syncRt);
 
+                    // Copy frame stamp.
+                    int sec = frameStamp.Sec;
+                    uint nanosec = frameStamp.Nanosec;
+
                     // Re-enable camera after the blit.
                     cam.enabled = true;
                     frameAvailable = false;
@@ -159,7 +164,7 @@ public class RealSense : MonoBehaviour
                     // Send frame to C++ for further processing.
                     unsafe
                     {
-                        TryPushFrame(id, NativeArrayUnsafeUtility.GetUnsafePtr(buffer));
+                        TryPushFrame(id, sec, nanosec, NativeArrayUnsafeUtility.GetUnsafePtr(buffer));
                     }
 
                     // Publish depth min and depth max for unity_rs_publisher.
@@ -204,6 +209,8 @@ public class RealSense : MonoBehaviour
         {
             cam.enabled = false;
 
+            // Save the time stamp of the frame.
+            frameStamp = ROSBridge.BuiltinInterfaces.Time.Realtime();
             // Blit through the depth shader to the async gbuffer.
             depthMaterial.SetTexture("_ColorTex", cam.targetTexture);
             Graphics.Blit(cam.targetTexture, asyncRt, depthMaterial);

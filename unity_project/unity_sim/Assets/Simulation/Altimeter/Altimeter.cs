@@ -14,9 +14,6 @@ public class Altimeter : MonoBehaviour
     // [SerializeField]
     // private float noise = 0.0f;
 
-    [SerializeField]
-    private double stampOffset = 0.04;
-
     private double height = 0.0;
     private ROS ros;
     Publisher<ROSBridge.GeometryMsgs.PoseWithCovarianceStamped> publisher = null;
@@ -64,7 +61,7 @@ public class Altimeter : MonoBehaviour
         {
             Header = new ROSBridge.StdMsgs.Header
             {
-                Stamp = ROSBridge.BuiltinInterfaces.Time.Realtime(stampOffset),
+                Stamp = ROSBridge.BuiltinInterfaces.Time.Realtime(),
                 FrameId = "odom"
             },
             Pose = new ROSBridge.GeometryMsgs.PoseWithCovariance
