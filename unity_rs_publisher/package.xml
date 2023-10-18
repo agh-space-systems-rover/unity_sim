@@ -3,9 +3,9 @@
 <package format="3">
   <name>unity_rs_publisher</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>a node that receives feed from RGB-D sensors simulated in Unity over a Unix socket, pre-processes the data similarly to realsense2_camera nodes and publishes results to ROS topics</description>
   <maintainer email="63957587+rayferric@users.noreply.github.com">rayferric</maintainer>
-  <license>TODO: License declaration</license>
+  <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <depend>rclcpp</depend>

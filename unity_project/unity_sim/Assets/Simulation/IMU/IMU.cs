@@ -7,16 +7,12 @@ public class IMU : MonoBehaviour
 {
     [SerializeField]
     private string frameId = "imu_link";
-
     [SerializeField]
     private string topic = "/imu/data";
-
     [SerializeField]
     private float frequency = 60;
-
-    // [SerializeField]
-    // private float noise = 0.0f;
-
+    [SerializeField]
+    private float yawOffset = 0;
     [SerializeField]
     private float gravity = 9.81f;
 
@@ -101,14 +97,18 @@ public class IMU : MonoBehaviour
         rosToUnity.SetColumn(2, new Vector4(0, 1, 0, 0));
         Matrix4x4 unityToRos = rosToUnity.inverse;
 
+        // Transform absolute orientation to ROS coordinate system.
+        Matrix4x4 unityToOffsetUnity = Matrix4x4.Rotate(Quaternion.AngleAxis(yawOffset, Vector3.up));
         Matrix4x4 angPosMat = Matrix4x4.Rotate(angPos);
-        angPosMat = unityToRos * angPosMat * rosToUnity;
+        angPosMat = unityToRos * unityToOffsetUnity * angPosMat * rosToUnity;
         angPos = angPosMat.rotation;
 
+        // Transform angular velocity to ROS coordinate system.
         Matrix4x4 angVelMat = Matrix4x4.Rotate(angVel);
         angVelMat = unityToRos * angVelMat * rosToUnity;
         angVel = angVelMat.rotation;
 
+        // Transform acceleration vector to ROS coordinate system.
         acc = unityToRos.MultiplyVector(acc);
 
         await imuPublisher.Publish(new ROSBridge.SensorMsgs.Imu

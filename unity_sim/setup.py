@@ -2,8 +2,18 @@ import glob
 import os
 import sys
 from setuptools import find_packages, setup
+import xml.etree.ElementTree as ET
 
-package_name = "unity_sim"
+# Parse package.xml to extract package information.
+tree = ET.parse("package.xml")
+root = tree.getroot()
+package_name = root.find("name").text
+package_version = root.find("version").text
+maintainer_name = root.find("maintainer").text
+maintainer_email = root.find("maintainer").get("email")
+description = root.find("description").text
+license = root.find("license").text
+
 pkg_dir = os.path.abspath(sys.path[0])
 unity_project_dir = os.path.abspath(os.path.join(pkg_dir, "..", "unity_project"))
 
@@ -16,7 +26,7 @@ with open(os.path.join(pkg_dir, "unity_project_dir"), "w") as f:
 try:
     setup(
         name=package_name,
-        version="0.0.0",
+        version=package_version,
         packages=find_packages(),
         data_files=[
             ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
@@ -31,10 +41,10 @@ try:
         ],
         install_requires=[],
         zip_safe=True,
-        maintainer="rayferric",
-        maintainer_email="63957587+rayferric@users.noreply.github.com",
-        description="Unity simulation environment for AGH Space Systems robotics projects.",
-        license="MIT",
+        maintainer=maintainer_name,
+        maintainer_email=maintainer_email,
+        description=description,
+        license=license,
         entry_points={
             "console_scripts": [
                 "simulation = unity_sim:simulation",

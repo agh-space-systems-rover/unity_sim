@@ -20,6 +20,8 @@ namespace ROSBridge
         internal ClientWebSocket socket;
         internal TaskCompletionSource<bool> connectionEstablished = new TaskCompletionSource<bool>();
         internal readonly Dictionary<string, Action<JObject>> _subscribers = new Dictionary<string, Action<JObject>>();
+        internal readonly List<string> publishedTopics = new List<string>();
+        internal bool closed = false;
 
         public ROS(string host = "localhost:9090")
         {
@@ -55,14 +57,34 @@ namespace ROSBridge
                 type = typeof(T).GetField("ROSMessageType").GetValue(null)
             });
 
+            // Save the publisher.
+            publishedTopics.Add(topic);
+
             // Return a publisher object.
             return new Publisher<T>(this, topic);
         }
 
         public async Task Close()
         {
+            // If already closed.
+            if (closed)
+            {
+                return;
+            }
+            closed = true;
+
             // Wait for the connection to be established.
             await connectionEstablished.Task;
+
+            // Unadvertise all publishers.
+            foreach (string topic in publishedTopics)
+            {
+                await Send(new
+                {
+                    op = "unadvertise",
+                    topic = topic
+                });
+            }
 
             await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closing", CancellationToken.None);
             socket.Dispose();

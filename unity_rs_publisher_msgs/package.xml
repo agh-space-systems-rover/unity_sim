@@ -3,9 +3,9 @@
 <package format="3">
   <name>unity_rs_publisher_msgs</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>message interfaces for unity_rs_publisher</description>
   <maintainer email="63957587+rayferric@users.noreply.github.com">rayferric</maintainer>
-  <license>TODO: License declaration</license>
+  <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
