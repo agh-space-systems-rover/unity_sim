@@ -11,7 +11,6 @@ using Newtonsoft.Json.Linq;
 
 namespace ROSBridge
 {
-
     public class ROS
     {
         internal static readonly int reconnectionAttempts = 5;
@@ -138,6 +137,7 @@ namespace ROSBridge
                     }
                     while (!result.EndOfMessage);
 
+                    // Deserialize the WebSocket message.
                     ms.Seek(0, SeekOrigin.Begin);
                     if (result.MessageType == WebSocketMessageType.Text)
                     {
@@ -146,6 +146,7 @@ namespace ROSBridge
                             JObject json = JObject.Parse(reader.ReadToEnd());
                             string op = (string)json["op"];
 
+                            // Invoke subscribers if a ROS message was published.
                             if (op == "publish")
                             {
                                 string topic = (string)json["topic"];

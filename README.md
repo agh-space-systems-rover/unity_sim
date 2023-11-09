@@ -6,9 +6,7 @@ Unity simulation environment for AGH Space Systems robotics projects.
 
 ## Getting Started
 
-This repository uses Git LFS extension to facilitate version control of large asset files in this project. **BEFORE YOU CLONE** this repository, you must install the Git LFS addon using your system's package manager or by downloading it directly as described [here](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage). This hyperlink also contains instructions on how to verify if the extension works correctly.
-
-Once Git LFS works on your system, please clone the repository to your ROS 2 workspace:
+Firstly, please clone the repository to your ROS 2 workspace:
 ```bash
 cd src
 git clone git@github.com:agh-space-systems-rover/unity_sim.git
@@ -50,4 +48,3 @@ This software must be installed on the host computer in order to build the plugi
 - C++ 20 compiler
 
 The plugin will only be recompiled if the simulation [starts](./unity_sim/unity_sim/__init__.py) and the [binary file](./unity_sim/Assets/Simulation/RealSense/UnityRSPublisherPlugin.so) is not found in the assets folder. That is why you need to manually remove it and restart the simulation to recompile the plugin.
-
