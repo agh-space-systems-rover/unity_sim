@@ -43,6 +43,8 @@ public class KalmanVehicle : MonoBehaviour
     private void OnMove(InputValue value)
     {
         Vector2 input = value.Get<Vector2>();
+        // Scale up diagonal input.
+        input = Vector2.Max(Vector2.Min(1.414F * input, Vector2.one), -Vector2.one);
 
         wheelStates.FrontLeft = new WheelState
         {
