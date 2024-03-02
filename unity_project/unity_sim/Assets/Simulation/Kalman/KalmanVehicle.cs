@@ -26,7 +26,7 @@ public class KalmanVehicle : MonoBehaviour
     [SerializeField]
     private Transform flWheelBone, frWheelBone, blWheelBone, brWheelBone;
 
-    private const float unitTorque = 8; // torque per 1 m/s
+    private const float unitTorque = 10; // torque per 1 m/s
     private const float manualSpeed = 1; // WSAD move speed; m/s
     private const float manualSteerAngle = 30 * Mathf.Deg2Rad; // WSAD steer angle; radians
     private const float maxTurnSpeed = 90; // turning speed of a wheel; deg/s
