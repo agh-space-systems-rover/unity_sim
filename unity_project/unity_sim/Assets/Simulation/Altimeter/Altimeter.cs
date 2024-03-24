@@ -6,6 +6,8 @@ using ROSBridge;
 public class Altimeter : MonoBehaviour
 {
     [SerializeField]
+    private string frameId = "odom"; // not altimeter_link
+    [SerializeField]
     private string topic = "/altimeter/pose";
 
     [SerializeField]
@@ -16,7 +18,7 @@ public class Altimeter : MonoBehaviour
 
     private double height = 0.0;
     private ROS ros;
-    Publisher<ROSBridge.GeometryMsgs.PoseWithCovarianceStamped> publisher = null;
+    private Publisher<ROSBridge.GeometryMsgs.PoseWithCovarianceStamped> publisher = null;
     private double lastPublishTime = 0.0;
     private double variance = 0.1;
 
@@ -26,6 +28,8 @@ public class Altimeter : MonoBehaviour
 
         ros = new ROS();
         publisher = await ros.CreatePublisher<ROSBridge.GeometryMsgs.PoseWithCovarianceStamped>(topic);
+
+        FixedUpdate();
     }
 
     private async void OnApplicationQuit()
@@ -62,7 +66,7 @@ public class Altimeter : MonoBehaviour
             Header = new ROSBridge.StdMsgs.Header
             {
                 Stamp = ROSBridge.BuiltinInterfaces.Time.Realtime(),
-                FrameId = "odom"
+                FrameId = frameId
             },
             Pose = new ROSBridge.GeometryMsgs.PoseWithCovariance
             {

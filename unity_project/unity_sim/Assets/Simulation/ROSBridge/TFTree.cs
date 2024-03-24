@@ -18,6 +18,7 @@ namespace ROSBridge
             // Subscribe to tf_static.
             _ = ros.CreateSubscription<ROSBridge.TF2Msgs.TFMessage>(tfStaticTopic, (msg) =>
             {
+                // TODO: Sometimes this message is not received.
                 // For each transform.
                 foreach (ROSBridge.GeometryMsgs.TransformStamped transform in msg.Transforms)
                 {
@@ -81,7 +82,7 @@ namespace ROSBridge
             }
         }
 
-        private string tfStaticTopic = "/tf_static";
+        private string tfStaticTopic = "/tf_static/republished_for_unity";
         private string tfTopic = "/tf";
         private Dictionary<string, TFNode> nodes = new Dictionary<string, TFNode>();
 

@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace ROSBridge.WheelMsgs
+namespace ROSBridge.KalmanInterfaces
 {
     public struct WheelStates
     {

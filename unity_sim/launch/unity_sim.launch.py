@@ -10,5 +10,10 @@ def generate_launch_description():
             Node(package="rosbridge_server", executable="rosbridge_websocket"),
             # custom Unix Socket server for camera image transfer
             Node(package="unity_rs_publisher", executable="unity_rs_publisher"),
+            # tf_static republisher
+            Node(
+                package="unity_tf_static_republisher",
+                executable="unity_tf_static_republisher",
+            ),
         ]
     )

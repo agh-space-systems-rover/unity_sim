@@ -12,7 +12,7 @@ public class IMU : MonoBehaviour
     [SerializeField]
     private float frequency = 60;
     [SerializeField]
-    private float yawOffset = 0;
+    private float yawOffset = 0; // rad
     [SerializeField]
     private float gravity = 9.81f;
 
@@ -22,7 +22,7 @@ public class IMU : MonoBehaviour
     private Quaternion prevAngPos;
     private Quaternion prevAngVel;
     private ROS ros;
-    Publisher<ROSBridge.SensorMsgs.Imu> imuPublisher = null;
+    private Publisher<ROSBridge.SensorMsgs.Imu> imuPublisher = null;
     private double lastPublishTime = 0.0;
     private double[] covariance = new double[9] { 1e-3, 0, 0, 0, 1e-3, 0, 0, 0, 1e-3 };
 
@@ -30,11 +30,12 @@ public class IMU : MonoBehaviour
     {
         prevPos = transform.position;
         prevVel = Vector3.zero;
-
         prevAngPos = Quaternion.identity;
 
         ros = new ROS();
         imuPublisher = await ros.CreatePublisher<ROSBridge.SensorMsgs.Imu>(topic);
+
+        FixedUpdate();
     }
 
     private async void OnApplicationQuit()
@@ -56,7 +57,7 @@ public class IMU : MonoBehaviour
         prevAcc = acc;
 
         // angular update
-        Quaternion angPos = transform.rotation;
+        Quaternion angPos = transform.rotation; // world space rotation as a quaternion
         Quaternion deltaAngPos = angPos * Quaternion.Inverse(prevAngPos);
         // Vector3 deltaAngPosAxis = new Vector3(deltaAngPos.x, deltaAngPos.y, deltaAngPos.z).normalized;
         // float deltaAngPosAngle = Mathf.Acos(deltaAngPos.w) * 2.0f;
@@ -98,7 +99,7 @@ public class IMU : MonoBehaviour
         Matrix4x4 unityToRos = rosToUnity.inverse;
 
         // Transform absolute orientation to ROS coordinate system.
-        Matrix4x4 unityToOffsetUnity = Matrix4x4.Rotate(Quaternion.AngleAxis(yawOffset, Vector3.up));
+        Matrix4x4 unityToOffsetUnity = Matrix4x4.Rotate(Quaternion.AngleAxis(Mathf.Rad2Deg * yawOffset, Vector3.up));
         Matrix4x4 angPosMat = Matrix4x4.Rotate(angPos);
         angPosMat = unityToRos * unityToOffsetUnity * angPosMat * rosToUnity;
         angPos = angPosMat.rotation;

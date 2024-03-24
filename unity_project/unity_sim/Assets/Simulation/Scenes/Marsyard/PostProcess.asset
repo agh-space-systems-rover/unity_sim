@@ -79,7 +79,7 @@ MonoBehaviour:
     m_Value: 1.5
   streaksIntensity:
     m_OverrideState: 0
-    m_Value: 0
+    m_Value: 1
   streaksLength:
     m_OverrideState: 0
     m_Value: 0.5
@@ -141,7 +141,7 @@ MonoBehaviour:
     m_Value: {x: 0.9493797, y: 1, z: 0.9495463, w: -0.029422784}
   highlights:
     m_OverrideState: 0
-    m_Value: {x: 0.93303734, y: 0.99524534, z: 1, w: -0.0501954}
+    m_Value: {x: 0.93303734, y: 0.99524534, z: 1, w: -0.26657867}
   shadowsStart:
     m_OverrideState: 0
     m_Value: 0

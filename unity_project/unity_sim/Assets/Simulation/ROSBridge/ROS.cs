@@ -20,6 +20,7 @@ namespace ROSBridge
         internal TaskCompletionSource<bool> connectionEstablished = new TaskCompletionSource<bool>();
         internal readonly Dictionary<string, Action<JObject>> _subscribers = new Dictionary<string, Action<JObject>>();
         internal readonly List<string> publishedTopics = new List<string>();
+        internal readonly Dictionary<string, Action<JObject, JObject>> services = new Dictionary<string, Action<JObject, JObject>>();
         internal bool closed = false;
 
         public ROS(string host = "localhost:9090")
@@ -63,6 +64,20 @@ namespace ROSBridge
             return new Publisher<T>(this, topic);
         }
 
+        public async Task CreateService<Srv, Req, Res>(string service, Action<Req, Res> callback)
+        {
+            // Advertise the service.
+            await Send(new
+            {
+                op = "advertise_service",
+                service = service,
+                type = typeof(Srv).GetField("ROSServiceType").GetValue(null),
+            });
+
+            // Remember the callback.
+            services[service] = (JObject req, JObject res) => callback(req.ToObject<Req>(), res.ToObject<Res>());
+        }
+
         public async Task Close()
         {
             // If already closed.
@@ -82,6 +97,16 @@ namespace ROSBridge
                 {
                     op = "unadvertise",
                     topic = topic
+                });
+            }
+
+            // Unadvertise all services.
+            foreach (string service in services.Keys)
+            {
+                await Send(new
+                {
+                    op = "unadvertise_service",
+                    service = service
                 });
             }
 
@@ -153,6 +178,25 @@ namespace ROSBridge
                                 JObject msg = (JObject)json["msg"];
 
                                 _subscribers[topic]?.Invoke(msg);
+                            }
+                            else if (op == "call_service")
+                            {
+                                string service = (string)json["service"];
+                                JObject req = (JObject)json["args"];
+                                JObject res = new JObject();
+
+                                // Invoke the service.
+                                services[service]?.Invoke(req, res);
+
+                                // Send the response.
+                                await Send(new
+                                {
+                                    op = "service_response",
+                                    id = (string)json["id"],
+                                    service = service,
+                                    values = res,
+                                    result = true
+                                });
                             }
                         }
                     }

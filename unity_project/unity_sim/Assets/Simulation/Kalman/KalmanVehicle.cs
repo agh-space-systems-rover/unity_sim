@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 using ROSBridge;
-using ROSBridge.WheelMsgs;
+using ROSBridge.KalmanInterfaces;
 
 // damping = how much the wheel RPM is limited; high damping plays well with high torque
 
@@ -25,6 +25,8 @@ public class KalmanVehicle : MonoBehaviour
 
     [SerializeField]
     private Transform flWheelBone, frWheelBone, blWheelBone, brWheelBone;
+    [SerializeField]
+    private string wheelStatesTopic = "wheel_controller/state";
 
     private const float unitTorque = 10; // torque per 1 m/s
     private const float manualSpeed = 1; // WSAD move speed; m/s
@@ -106,7 +108,7 @@ public class KalmanVehicle : MonoBehaviour
         flTorquePid = frTorquePid = blTorquePid = brTorquePid = new PID(1, 0, 0);
 
         // Subscribe to /wheel_controller/state topic.
-        await ros.CreateSubscription<WheelStates>("/wheel_controller/state", (msg) =>
+        await ros.CreateSubscription<WheelStates>(wheelStatesTopic, (msg) =>
         {
             Debug.Log("Received wheel states.");
             wheelStates = msg;

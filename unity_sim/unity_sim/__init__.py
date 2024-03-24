@@ -4,6 +4,7 @@ import rclpy
 import rclpy.node
 import subprocess
 import ament_index_python
+import atexit
 
 
 def find_unity_version(project_dir: str):
@@ -95,14 +96,25 @@ class UnitySim(rclpy.node.Node):
             f"{project_dir}/unity_sim/Assets/Simulation/Scenes/{scene}.unity"
         )
 
-        # Prepare the command.
-        cmd = [os.path.join(unity_dir, "Editor/Unity"), "-openfile", scene_path]
-        if running_in_distrobox:
-            cmd = ["distrobox-host-exec"] + cmd
+        # Prepare a command to run and kill Unity.
+        run_cmd = [os.path.join(unity_dir, "Editor/Unity"), "-openfile", scene_path]
+        kill_cmd = ["pkill", "-9", "-f", " ".join(run_cmd)]
 
-        # Run Unity.
-        self.get_logger().info(f"Running Unity with command: {' '.join(cmd)}")
-        subprocess.run(cmd)
+        # Run Unity in background.
+        if running_in_distrobox:
+            run_cmd = ["distrobox-host-exec"] + run_cmd
+        self.get_logger().info(f"Running Unity with command: {' '.join(run_cmd)}")
+        subprocess.Popen(run_cmd)
+
+        # Spin until killed.
+        try:
+            rclpy.spin(self)
+        except KeyboardInterrupt:
+            self.get_logger().info("Shutting down Unity:\n" + " ".join(kill_cmd))
+            if running_in_distrobox:
+                kill_cmd = ["distrobox-host-exec"] + kill_cmd
+            subprocess.run(kill_cmd)
+            exit(0)
 
 
 # Simulation supervisor node.
