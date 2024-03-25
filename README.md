@@ -21,12 +21,16 @@ ros2 run unity_sim version
 ```
 And this command will yield something akin to `Unity 2023.1.9f1`. (Exact version may differ!)
 
-You need to install this version of Unity on your system. Start by installing Unity Hub (either with the AUR package `unityhub` or) by downloading it directly from [here](https://unity3d.com/get-unity/download). Once you have Unity Hub installed, it should prompt you to sign into your account in order to activate a personal license. When you are logged in, you can install the required version of Unity. Unity Hub only provides download links for the latest versions of Unity, so you will need to use the [Unity Archive](https://unity.com/releases/editor/archive) to find the version you need. From there you can click a button that will open Unity Hub and start the download. After the download is complete, it is best to test if your installation is able to run other demo projects, but you should be fine to close Unity Hub now and run the simulation:
+You need to install this version of Unity on your system. Start by installing Unity Hub using the [official instructions](https://docs.unity3d.com/hub/manual/InstallHub.html#install-hub-linux). (Users on Arch Linux can install `unityhub` from the AUR.) Once you have Unity Hub installed, it should prompt you to sign into your account in order to activate a personal license. When you are logged in, you can install the required version of Unity. Unity Hub only provides download links for the latest versions of Unity, so you will need to use the [Unity Archive](https://unity.com/releases/editor/archive) to find the version you need. From there you can click a button that will open Unity Hub and start the download. After the download is complete, it is best to test if your installation is able to run other demo projects, but you should be fine to close Unity Hub now and run the simulation:
 ```bash
 ros2 launch unity_sim unity_sim.launch.py
 ```
 
 On the first run, the project will take a while to start, because it needs to download some packages from the web and import all the assets. Subsequent runs however will be much faster. Unity might still take up to a dozen of seconds to start, so you can always use the above command to run the simulation in a new terminal window, while you continue to restart other nodes separately.
+
+> [!IMPORTANT]
+> If there are errors in the Unity Console that mention problems with the RealSense plugin, you may need to manually remove `UnityRSPublisherPlugin.so` file from the `unity_sim/Assets/Simulation/RealSense` directory and restart the simulation to trigger a re-build.
+> See the [RealSense Publisher Plugin Development](#RealSense-Publisher-Plugin-Development) section for more information.
 
 If you wish to upgrade the simulation to a newer version of Unity, please launch it using the Unity Hub. The project directory is located [here](./unity_project/unity_sim) and will need to be manually selected in the Unity Hub.
 
