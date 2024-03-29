@@ -23,7 +23,7 @@ public class GPS : MonoBehaviour
     private string topic = "/gps/fix";
 
     [SerializeField]
-    private float frequency = 1;
+    private float frequency = 10;
 
     // [SerializeField]
     // private float noise = 0.0f;

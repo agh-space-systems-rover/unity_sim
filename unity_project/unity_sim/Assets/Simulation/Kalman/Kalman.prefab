@@ -1064,7 +1064,7 @@ MonoBehaviour:
   autonomyMaterialNameRegex: autonomy
   maxIntensity: 3
   setColorService: ueuos/set_color
-  setModeService: ueuos/set_mode
+  setStateService: ueuos/set_state
   setEffectService: ueuos/set_effect
 --- !u!4 &8387703587464223613 stripped
 Transform:

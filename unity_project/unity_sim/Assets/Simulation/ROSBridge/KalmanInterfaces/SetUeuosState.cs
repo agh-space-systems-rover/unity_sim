@@ -3,10 +3,10 @@ using ROSBridge.StdMsgs;
 
 namespace ROSBridge.KalmanInterfaces
 {
-    public struct SetUeuosMode
+    public struct SetUeuosState
     {
         [JsonIgnore]
-        public const string ROSServiceType = "kalman_interfaces/srv/SetUeuosMode";
+        public const string ROSServiceType = "kalman_interfaces/srv/SetUeuosState";
 
         public struct Request
         {
@@ -19,8 +19,8 @@ namespace ROSBridge.KalmanInterfaces
             [JsonIgnore]
             public const byte FINISHED = 3;
 
-            [JsonProperty("mode")]
-            public byte Mode { get; set; }
+            [JsonProperty("state")]
+            public byte State { get; set; }
         }
 
         public struct Response

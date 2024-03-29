@@ -36,7 +36,7 @@ public class KalmanUeuos : MonoBehaviour
     [SerializeField]
     private string setColorService = "ueuos/set_color";
     [SerializeField]
-    private string setModeService = "ueuos/set_mode";
+    private string setStateService = "ueuos/set_state";
     [SerializeField]
     private string setEffectService = "ueuos/set_effect";
 
@@ -67,7 +67,7 @@ public class KalmanUeuos : MonoBehaviour
 
         // Create services.
         await ros.CreateService<SetUeuosColor, SetUeuosColor.Request, SetUeuosColor.Response>(setColorService, SetColor);
-        await ros.CreateService<SetUeuosMode, SetUeuosMode.Request, SetUeuosMode.Response>(setModeService, SetMode);
+        await ros.CreateService<SetUeuosState, SetUeuosState.Request, SetUeuosState.Response>(setStateService, SetState);
         await ros.CreateService<SetUeuosEffect, SetUeuosEffect.Request, SetUeuosEffect.Response>(setEffectService, SetEffect);
     }
 
@@ -84,19 +84,19 @@ public class KalmanUeuos : MonoBehaviour
         colorFunction = _ => new Color(req.Color.R, req.Color.G, req.Color.B);
     }
 
-    private void SetMode(SetUeuosMode.Request req, SetUeuosMode.Response res)
+    private void SetState(SetUeuosState.Request req, SetUeuosState.Response res)
     {
-        switch (req.Mode) {
-            case SetUeuosMode.Request.OFF:
+        switch (req.State) {
+            case SetUeuosState.Request.OFF:
                 colorFunction = _ => Color.black;
                 break;
-            case SetUeuosMode.Request.AUTONOMY:
+            case SetUeuosState.Request.AUTONOMY:
                 colorFunction = _ => Color.red;
                 break;
-            case SetUeuosMode.Request.TELEOP:
+            case SetUeuosState.Request.TELEOP:
                 colorFunction = _ => Color.blue;
                 break;
-            case SetUeuosMode.Request.FINISHED:
+            case SetUeuosState.Request.FINISHED:
                 colorFunction = time => {
                     float strength = Mathf.Sin(time * 2) * 0.5F + 0.5F;
                     return Color.green * strength;
