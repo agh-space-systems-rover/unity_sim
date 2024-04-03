@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7279370725434162011}
   m_Layer: 0
-  m_Name: Widemouth
+  m_Name: Bottle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -103,7 +103,7 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 0c5a1a540e3b9d765aa248cedb92396e,
         type: 3}
       propertyPath: m_Name
-      value: widemouth
+      value: bottle
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

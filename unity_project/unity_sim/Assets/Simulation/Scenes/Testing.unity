@@ -442,7 +442,7 @@ PrefabInstance:
     - target: {fileID: 626809253672846903, guid: 0324ba86fc085b85c94af5f12b10ced1,
         type: 3}
       propertyPath: m_Name
-      value: Widemouth (1)
+      value: Bottle (1)
       objectReference: {fileID: 0}
     - target: {fileID: 7279370725434162011, guid: 0324ba86fc085b85c94af5f12b10ced1,
         type: 3}
@@ -1564,7 +1564,7 @@ PrefabInstance:
     - target: {fileID: 626809253672846903, guid: 0324ba86fc085b85c94af5f12b10ced1,
         type: 3}
       propertyPath: m_Name
-      value: Widemouth
+      value: Bottle
       objectReference: {fileID: 0}
     - target: {fileID: 7279370725434162011, guid: 0324ba86fc085b85c94af5f12b10ced1,
         type: 3}

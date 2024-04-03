@@ -921,10 +921,10 @@ MonoBehaviour:
   m_MinSize: {x: 100, y: 100}
   m_MaxSize: {x: 4000, y: 4000}
   m_TitleContent:
-    m_Text: WidemouthBodyShadergraph
+    m_Text: BottleBodyShadergraph
     m_Image: {fileID: 2800000, guid: 7129268cf102b2f45809905bcb27ce8b, type: 3}
     m_Tooltip: 
-    m_TextWithWhitespace: "WidemouthBodyShadergraph\u200B"
+    m_TextWithWhitespace: "BottleBodyShadergraph\u200B"
   m_Pos:
     serializedVersion: 2
     x: 506
