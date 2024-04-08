@@ -63,14 +63,17 @@ void handle_client(int client_socket, std::string client_id, size_t data_size) {
 		color_pub = ros_it->advertise("/" + client_id + "/color/image_raw", 1);
 		// - no color metadata
 		// - depth info same as color
-		points_pub = ros_node->create_publisher<sensor_msgs::msg::PointCloud2>(
-		    "/" + client_id + "/depth/color/points", 1
-		);
+		// points_pub =
+		// ros_node->create_publisher<sensor_msgs::msg::PointCloud2>(
+		//     "/" + client_id + "/depth/color/points", 1
+		// );
+		// NOTE: point clouds were disabled because we can generate them in ROS
+		// Also, actual RealSense PCs are very high detail, so a custom cloud
+		// pipeline is needed.
 		// - no depth camera_info
 		// - no depth images
 		// - no depth metadata
 		// - no depth_to_color extrinsics
-		// - no IMU; TODO: Handle in Unity?
 		// - no diagnostics, parameter_events, rosout, tf_static, etc.
 
 		// Subscribe to Unity camera metadata to know the dimensions and depth
@@ -91,10 +94,9 @@ void handle_client(int client_socket, std::string client_id, size_t data_size) {
 	}
 
 	// persistent buffers
-	std::vector<uint8_t>    data(data_size);
-	sensor_msgs::msg::Image color, depth;
-	cv::Mat                 depth_image_8bit;
-	// std::vector<uint8_t> point_cloud;
+	std::vector<uint8_t>          data(data_size);
+	sensor_msgs::msg::Image       color, depth;
+	cv::Mat                       depth_image_8bit;
 	sensor_msgs::msg::PointCloud2 point_cloud;
 	sensor_msgs::msg::CameraInfo  camera_info;
 
@@ -205,101 +207,102 @@ void handle_client(int client_socket, std::string client_id, size_t data_size) {
 			color.encoding              = sensor_msgs::image_encodings::RGB8;
 			depth.encoding = sensor_msgs::image_encodings::TYPE_16UC1;
 
-			// Generate point cloud.
-			size_t point_cloud_width =
-			    static_cast<float>(width) / height * point_cloud_height;
-			point_cloud.data.reserve(
-			    point_cloud_width * point_cloud_height * 4 * 4
-			); // 4 bytes per float; 4 floats per point (x, y, z, rgb); rgb is
-			   // actually uint32
-			point_cloud.data.clear();
-			float subsample_radius =
-			    static_cast<float>(height) / point_cloud_height / 2;
-			for (size_t row = 0; row < point_cloud_height; row++) {
-				for (size_t col = 0; col < point_cloud_width; col++) {
-					size_t src_row = row * (static_cast<float>(height) /
-					                        point_cloud_height) +
-					                 0.5;
-					size_t src_col = col * (static_cast<float>(height) /
-					                        point_cloud_height) +
-					                 0.5;
+			// // Generate point cloud.
+			// size_t point_cloud_width =
+			//     static_cast<float>(width) / height * point_cloud_height;
+			// point_cloud.data.reserve(
+			//     point_cloud_width * point_cloud_height * 4 * 4
+			// ); // 4 bytes per float; 4 floats per point (x, y, z, rgb); rgb
+			// is
+			//    // actually uint32
+			// point_cloud.data.clear();
+			// float subsample_radius =
+			//     static_cast<float>(height) / point_cloud_height / 2;
+			// for (size_t row = 0; row < point_cloud_height; row++) {
+			// 	for (size_t col = 0; col < point_cloud_width; col++) {
+			// 		size_t src_row = row * (static_cast<float>(height) /
+			// 		                        point_cloud_height) +
+			// 		                 0.5;
+			// 		size_t src_col = col * (static_cast<float>(height) /
+			// 		                        point_cloud_height) +
+			// 		                 0.5;
 
-					// Subsample points.
-					src_row = static_cast<float>(src_row) +
-					          dist(rng) * subsample_radius;
-					src_col = static_cast<float>(src_col) +
-					          dist(rng) * subsample_radius;
+			// 		// Subsample points.
+			// 		src_row = static_cast<float>(src_row) +
+			// 		          dist(rng) * subsample_radius;
+			// 		src_col = static_cast<float>(src_col) +
+			// 		          dist(rng) * subsample_radius;
 
-					if (src_row >= height || src_col >= width) {
-						continue;
-					}
+			// 		if (src_row >= height || src_col >= width) {
+			// 			continue;
+			// 		}
 
-					uint8_t src_depth_low =
-					    depth.data[(src_row * width + src_col) * 2 + 0];
-					uint8_t src_depth_high =
-					    depth.data[(src_row * width + src_col) * 2 + 1];
-					uint32_t src_depth = static_cast<uint32_t>(src_depth_high)
-					                      << 8 |
-					                     src_depth_low;
-					uint32_t src_r =
-					    color.data[(src_row * width + src_col) * 3 + 0];
-					uint32_t src_g =
-					    color.data[(src_row * width + src_col) * 3 + 1];
-					uint32_t src_b =
-					    color.data[(src_row * width + src_col) * 3 + 2];
+			// 		uint8_t src_depth_low =
+			// 		    depth.data[(src_row * width + src_col) * 2 + 0];
+			// 		uint8_t src_depth_high =
+			// 		    depth.data[(src_row * width + src_col) * 2 + 1];
+			// 		uint32_t src_depth = static_cast<uint32_t>(src_depth_high)
+			// 		                      << 8 |
+			// 		                     src_depth_low;
+			// 		uint32_t src_r =
+			// 		    color.data[(src_row * width + src_col) * 3 + 0];
+			// 		uint32_t src_g =
+			// 		    color.data[(src_row * width + src_col) * 3 + 1];
+			// 		uint32_t src_b =
+			// 		    color.data[(src_row * width + src_col) * 3 + 2];
 
-					if (src_depth != 0) {
-						size_t i = point_cloud.data.size();
-						point_cloud.data.resize(point_cloud.data.size() + 16);
+			// 		if (src_depth != 0) {
+			// 			size_t i = point_cloud.data.size();
+			// 			point_cloud.data.resize(point_cloud.data.size() + 16);
 
-						float    z   = src_depth / 1000.0F;
-						float    x   = (src_col - meta->cx) * z / meta->fx;
-						float    y   = (src_row - meta->cy) * z / meta->fy;
-						uint32_t rgb = (src_r & 0xff) << 16 |
-						               (src_g & 0xff) << 8 | (src_b & 0xff);
+			// 			float    z   = src_depth / 1000.0F;
+			// 			float    x   = (src_col - meta->cx) * z / meta->fx;
+			// 			float    y   = (src_row - meta->cy) * z / meta->fy;
+			// 			uint32_t rgb = (src_r & 0xff) << 16 |
+			// 			               (src_g & 0xff) << 8 | (src_b & 0xff);
 
-						// Add a point to the buffer.
-						*reinterpret_cast<float *>(&point_cloud.data[i + 0]) =
-						    x;
-						*reinterpret_cast<float *>(&point_cloud.data[i + 4]) =
-						    y;
-						*reinterpret_cast<float *>(&point_cloud.data[i + 8]) =
-						    z;
-						*reinterpret_cast<uint32_t *>(&point_cloud.data[i + 12]
-						) = rgb;
-					}
-				}
-			}
+			// 			// Add a point to the buffer.
+			// 			*reinterpret_cast<float *>(&point_cloud.data[i + 0]) =
+			// 			    x;
+			// 			*reinterpret_cast<float *>(&point_cloud.data[i + 4]) =
+			// 			    y;
+			// 			*reinterpret_cast<float *>(&point_cloud.data[i + 8]) =
+			// 			    z;
+			// 			*reinterpret_cast<uint32_t *>(&point_cloud.data[i + 12]
+			// 			) = rgb;
+			// 		}
+			// 	}
+			// }
 
-			// Initialize the rest of the point cloud message.
-			point_cloud.header.frame_id = client_id + "_color_optical_frame";
-			point_cloud.height          = 1;
-			point_cloud.width           = point_cloud.data.size() / 16;
-			point_cloud.fields.resize(4);
-			point_cloud.fields[0].name   = "x";
-			point_cloud.fields[0].offset = 0;
-			point_cloud.fields[0].datatype =
-			    sensor_msgs::msg::PointField::FLOAT32;
-			point_cloud.fields[0].count  = 1;
-			point_cloud.fields[1].name   = "y";
-			point_cloud.fields[1].offset = 4;
-			point_cloud.fields[1].datatype =
-			    sensor_msgs::msg::PointField::FLOAT32;
-			point_cloud.fields[1].count  = 1;
-			point_cloud.fields[2].name   = "z";
-			point_cloud.fields[2].offset = 8;
-			point_cloud.fields[2].datatype =
-			    sensor_msgs::msg::PointField::FLOAT32;
-			point_cloud.fields[2].count  = 1;
-			point_cloud.fields[3].name   = "rgb";
-			point_cloud.fields[3].offset = 12;
-			point_cloud.fields[3].datatype =
-			    sensor_msgs::msg::PointField::UINT32;
-			point_cloud.fields[3].count = 1;
-			point_cloud.is_bigendian    = false;
-			point_cloud.point_step      = 16;
-			point_cloud.row_step        = point_cloud.data.size();
-			point_cloud.is_dense        = true;
+			// // Initialize the rest of the point cloud message.
+			// point_cloud.header.frame_id = client_id + "_color_optical_frame";
+			// point_cloud.height          = 1;
+			// point_cloud.width           = point_cloud.data.size() / 16;
+			// point_cloud.fields.resize(4);
+			// point_cloud.fields[0].name   = "x";
+			// point_cloud.fields[0].offset = 0;
+			// point_cloud.fields[0].datatype =
+			//     sensor_msgs::msg::PointField::FLOAT32;
+			// point_cloud.fields[0].count  = 1;
+			// point_cloud.fields[1].name   = "y";
+			// point_cloud.fields[1].offset = 4;
+			// point_cloud.fields[1].datatype =
+			//     sensor_msgs::msg::PointField::FLOAT32;
+			// point_cloud.fields[1].count  = 1;
+			// point_cloud.fields[2].name   = "z";
+			// point_cloud.fields[2].offset = 8;
+			// point_cloud.fields[2].datatype =
+			//     sensor_msgs::msg::PointField::FLOAT32;
+			// point_cloud.fields[2].count  = 1;
+			// point_cloud.fields[3].name   = "rgb";
+			// point_cloud.fields[3].offset = 12;
+			// point_cloud.fields[3].datatype =
+			//     sensor_msgs::msg::PointField::UINT32;
+			// point_cloud.fields[3].count = 1;
+			// point_cloud.is_bigendian    = false;
+			// point_cloud.point_step      = 16;
+			// point_cloud.row_step        = point_cloud.data.size();
+			// point_cloud.is_dense        = true;
 
 			// Compose camera info message.
 			camera_info.header.frame_id  = client_id + "_color_optical_frame";
@@ -330,16 +333,16 @@ void handle_client(int client_socket, std::string client_id, size_t data_size) {
 				stamp.sec     = sec;
 				stamp.nanosec = nanosec;
 
-				color.header.stamp       = stamp;
-				depth.header.stamp       = stamp;
-				point_cloud.header.stamp = stamp;
+				color.header.stamp = stamp;
+				depth.header.stamp = stamp;
+				// point_cloud.header.stamp = stamp;
 				camera_info.header.stamp = stamp;
 
 				aligned_depth_to_color_info_pub->publish(camera_info);
 				aligned_depth_to_color_pub.publish(depth);
 				color_info_pub->publish(camera_info);
 				color_pub.publish(color);
-				points_pub->publish(point_cloud);
+				// points_pub->publish(point_cloud);
 				rclcpp::spin_some(ros_node);
 			}
 

@@ -40,7 +40,7 @@ The simulation provides a virtual IMU sensor. It is a standalone [C# script](./u
 
 ## How RealSense Cameras are Simulated
 
-In Unity each RealSense is a prefab composed of a single `GameObject` that contains a camera and the control script. The script renders the camera at a set rate and applies a shader that embeds the depth information in the alpha channel of the image. When a frame is available, it is read by the script onto the CPU, and from there [native C++ code](./unity_sim/unity_rs_publisher_plugin/) in invoked that sends the unmodified binary buffer over a Unix socket to the `unity_rs_publisher` ROS node. The node generates point clouds, image messages, camera info and publishes all this data. Importantly, the node subscribes to `{camera}/unity_rs_publisher/meta` topics to receive the cameras' configurations. Only then the node has all the required information to generate its own messages. 
+In Unity each RealSense is a prefab composed of a single `GameObject` that contains a camera and the control script. The script renders the camera at a set rate and applies a shader that embeds the depth information in the alpha channel of the image. When a frame is available, it is read by the script onto the CPU, and from there [native C++ code](./unity_sim/unity_rs_publisher_plugin/) in invoked that sends the unmodified binary buffer over a Unix socket to the `unity_rs_publisher` ROS node. The node generates point clouds (this is currently disabled), image messages, camera info and publishes all this data. Importantly, the node subscribes to `{camera}/unity_rs_publisher/meta` topics to receive the cameras' configurations. Only then the node has all the required information to generate its own messages. 
 
 ## RealSense Publisher Plugin Development
 
