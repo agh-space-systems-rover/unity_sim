@@ -28,9 +28,9 @@ public class KalmanVehicle : MonoBehaviour
     [SerializeField]
     private string wheelStatesTopic = "wheel_controller/state";
 
-    private const float unitTorque = 10; // torque per 1 m/s
-    private const float manualSpeed = 1; // WSAD move speed; m/s
-    private const float manualSteerAngle = 30 * Mathf.Deg2Rad; // WSAD steer angle; radians
+    private const float unitTorque = 8; // torque per 1 m/s
+    private const float manualSpeed = 1.0F; // WSAD move speed; m/s
+    private const float manualTurnRadius = 1.0F; // WSAD turn radius; m
     private const float maxTurnSpeed = 90; // turning speed of a wheel; deg/s
 
     // Dictionary that contains original rotations and positions of various bones.
@@ -48,26 +48,59 @@ public class KalmanVehicle : MonoBehaviour
         // Scale up diagonal input.
         input = Vector2.Max(Vector2.Min(1.414F * input, Vector2.one), -Vector2.one);
 
-        wheelStates.FrontLeft = new WheelState
+        float turnRadius = -manualTurnRadius / input.x;
+        float linearVelocity = manualSpeed;
+        float angularVelocity = manualSpeed / turnRadius;
+
+        Vector2[] turnVectors = new Vector2[]
         {
-            Velocity = input.y * manualSpeed,
-            Angle = -input.x * manualSteerAngle
+            new Vector2(-0.33F, 0.4F),
+            new Vector2(0.33F, 0.4F),
+            new Vector2(-0.33F, -0.4F),
+            new Vector2(0.33F, -0.4F)
         };
-        wheelStates.FrontRight = new WheelState
+
+        for (int i = 0; i < 4; i++)
         {
-            Velocity = input.y * manualSpeed,
-            Angle = -input.x * manualSteerAngle
-        };
-        wheelStates.BackLeft = new WheelState
-        {
-            Velocity = input.y * manualSpeed,
-            Angle = input.x * manualSteerAngle
-        };
-        wheelStates.BackRight = new WheelState
-        {
-            Velocity = input.y * manualSpeed,
-            Angle = input.x * manualSteerAngle
-        };
+            float robotRadius = 0.5F;
+            Vector2 linearVector = new Vector2(linearVelocity, 0);
+            Vector2 angularVector = turnVectors[i] / turnVectors[i].magnitude * angularVelocity * robotRadius;
+            Vector2 resultantVector = angularVector + linearVector;
+            float velocity = resultantVector.magnitude;
+            float angle = Mathf.Atan2(resultantVector.y, resultantVector.x);
+
+            switch (i)
+            {
+                case 0:
+                    wheelStates.FrontLeft = new WheelState
+                    {
+                        Velocity = velocity * input.y,
+                        Angle = angle
+                    };
+                    break;
+                case 1:
+                    wheelStates.FrontRight = new WheelState
+                    {
+                        Velocity = velocity * input.y,
+                        Angle = angle
+                    };
+                    break;
+                case 2:
+                    wheelStates.BackLeft = new WheelState
+                    {
+                        Velocity = velocity * input.y,
+                        Angle = angle
+                    };
+                    break;
+                case 3:
+                    wheelStates.BackRight = new WheelState
+                    {
+                        Velocity = velocity * input.y,
+                        Angle = angle
+                    };
+                    break;
+            }
+        }
     }
 
     private async void Start()
@@ -110,7 +143,7 @@ public class KalmanVehicle : MonoBehaviour
         // Subscribe to /wheel_controller/state topic.
         await ros.CreateSubscription<WheelStates>(wheelStatesTopic, (msg) =>
         {
-            Debug.Log("Received wheel states.");
+            // Debug.Log("Received wheel states.");
             wheelStates = msg;
         });
     }
@@ -140,6 +173,37 @@ public class KalmanVehicle : MonoBehaviour
         BrakeWheelIfStationary(frWheel);
         BrakeWheelIfStationary(blWheel);
         BrakeWheelIfStationary(brWheel);
+
+        // float vel0 = (flWheel.transform.position - wheelPrevPositions[0]).magnitude / Time.fixedDeltaTime;
+        // Debug.Log($"boost0 = {motorTorqueBoostsSmooth[0]}, vel0 = {vel0}");
+
+        // for (int i = 0; i < 4; i++)
+        // {
+        //     Vector3 wheelPos = i switch
+        //     {
+        //         0 => flWheel.transform.position,
+        //         1 => frWheel.transform.position,
+        //         2 => blWheel.transform.position,
+        //         3 => brWheel.transform.position,
+        //         _ => Vector3.zero
+        //     };
+        //     Vector3 wheelPrevPos = wheelPrevPositions[i];
+        //     wheelPrevPositions[i] = wheelPos;
+
+        //     float wantedVel = i switch
+        //     {
+        //         0 => wheelStates.FrontLeft.Velocity,
+        //         1 => wheelStates.FrontRight.Velocity,
+        //         2 => wheelStates.BackLeft.Velocity,
+        //         3 => wheelStates.BackRight.Velocity,
+        //         _ => 0
+        //     };
+        //     float wheelVel = (wheelPos - wheelPrevPos).magnitude / Time.fixedDeltaTime;
+
+        //     float P = 0.1F * (Mathf.Abs(wantedVel) - Mathf.Abs(wheelVel));
+        //     motorTorqueBoostsSmooth[i] += P;
+        //     motorTorqueBoostsSmooth[i] = Mathf.Clamp(motorTorqueBoostsSmooth[i], 0.5F, 2);
+        // }
     }
 
     private void BrakeWheelIfStationary(WheelCollider wheel)
