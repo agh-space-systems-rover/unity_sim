@@ -19,14 +19,18 @@ public class GPS : MonoBehaviour
 
     [SerializeField]
     private string frameId = "gps_link";
+    
     [SerializeField]
     private string topic = "/gps/fix";
 
     [SerializeField]
-    private float frequency = 10;
+    private float frequency = 1;
 
-    // [SerializeField]
-    // private float noise = 0.0f;
+    [SerializeField]
+    private bool enableAltitude = false;
+
+    [SerializeField]
+    private float noiseStdDev = 0;
 
     private ROS ros;
     private Publisher<ROSBridge.SensorMsgs.NavSatFix> publisher = null;
@@ -38,6 +42,7 @@ public class GPS : MonoBehaviour
     private bool initialized = false;
     internal Coords lastCoords;
     internal bool hasFix = false;
+    internal bool lastCoordsWerePublished = false;
 
     private async void Start()
     {
@@ -95,125 +100,6 @@ public class GPS : MonoBehaviour
         initialized = true;
     }
 
-    // private Vector3d Barycentric2D(Vector2d p1, Vector2d p2, Vector2d p3, Vector2d p)
-    // {
-    //     double detT = (p2.y - p3.y) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.y - p3.y);
-
-    //     double alpha = ((p2.y - p3.y) * (p.x - p3.x) + (p3.x - p2.x) * (p.y - p3.y)) / detT;
-    //     double beta = ((p3.y - p1.y) * (p.x - p3.x) + (p1.x - p3.x) * (p.y - p3.y)) / detT;
-    //     double gamma = 1 - alpha - beta;
-
-    //     return new Vector3d(alpha, beta, gamma);
-    // }
-
-    // private Vector2d ComputeLatLongPlanarFit() {
-    //     // Exit in case there are not enough base stations.
-    //     if (baseStations == null || baseStations.Length < 2)
-    //     {
-    //         return Vector2d.zero;
-    //     }
-
-    //     // For each pair of base stations, compute the transform from sim vectors to GPS vectors.
-    //     // Average the transforms to get a more precise one.
-    //     Vector2d rotationSum = Vector2d.zero;
-    //     double scaleSum = 0;
-    //     double samples = 0;
-    //     for (int i = 0; i < baseStations.Length; i++)
-    //     {
-    //         for (int j = i + 1; j < baseStations.Length; j++)
-    //         {
-    //             // Get the simulated world and GPS vectors from baseI to baseJ.
-    //             Vector2d vSimIJ = new Vector2d(
-    //                 (double)baseStations[j].transform.position.x - (double)baseStations[i].transform.position.x,
-    //                 (double)baseStations[j].transform.position.z - (double)baseStations[i].transform.position.z
-    //             );
-    //             Vector2d vGpsIJ = new Vector2d(
-    //                 baseStations[j].longitude - baseStations[i].longitude,
-    //                 baseStations[j].latitude - baseStations[i].latitude
-    //             );
-
-    //             // Find the transform from vSim to vGps and accumulate.
-    //             double weight = vSimIJ.magnitude; // weight by distance
-    //             double rot = System.Math.Atan2(vGpsIJ.y, vGpsIJ.x) - System.Math.Atan2(vSimIJ.y, vSimIJ.x);
-    //             rotationSum += new Vector2d(System.Math.Cos(rot), System.Math.Sin(rot)) * weight;
-    //             scaleSum += vGpsIJ.magnitude / vSimIJ.magnitude * weight;
-    //             samples += weight;
-    //         }
-    //     }
-    //     double rotation = System.Math.Atan2(rotationSum.y, rotationSum.x);
-    //     double scale = scaleSum / samples;
-
-    //     // Compute the average base station position and lat/long.
-    //     Vector2d avgBasePos = Vector2d.zero;
-    //     Vector2d avgLongLat = Vector2d.zero;
-    //     for (int i = 0; i < baseStations.Length; i++)
-    //     {
-    //         avgBasePos += new Vector2d((double)baseStations[i].transform.position.x, (double)baseStations[i].transform.position.z);
-    //         avgLongLat += new Vector2d(baseStations[i].longitude, baseStations[i].latitude);
-    //     }
-    //     avgBasePos /= baseStations.Length;
-    //     avgLongLat /= baseStations.Length;
-
-    //     // TODO: Move above computation to Start() and only update the following in FixedUpdate().
-
-    //     // Get the sim vectors from the average base station to the robot.
-    //     Vector2d vSim = new Vector2d(
-    //         (double)transform.position.x - (double)avgBasePos.x,
-    //         (double)transform.position.z - (double)avgBasePos.y
-    //     );
-
-    //     // Apply the sim->GPS transform.
-    //     Vector2d vGps = new Vector2d(
-    //         System.Math.Cos(rotation) * vSim.x - System.Math.Sin(rotation) * vSim.y,
-    //         System.Math.Sin(rotation) * vSim.x + System.Math.Cos(rotation) * vSim.y
-    //     ) * scale;
-        
-    //     // Compute the proper GPS coords.
-    //     double longitude = avgLongLat.x + vGps.x;
-    //     double latitude = avgLongLat.y + vGps.y;
-
-    //     return new Vector2d(latitude, longitude);
-    // }
-
-    // private Vector2d ComputeLatLongBarycentricInterpolation() {
-    //     // Exit in case there are not enough base stations.
-    //     if (baseStations == null || baseStations.Length < 3)
-    //     {
-    //         return Vector2d.zero;
-    //     }
-
-    //     // Compute base station distances
-    //     float[] distances = new float[baseStations.Length];
-    //     for (int i = 0; i < baseStations.Length; i++)
-    //     {
-    //         distances[i] = Vector3.Distance(transform.position, baseStations[i].transform.position);
-    //     }
-    //     // Sort base stations by distance
-    //     GPSBaseStation[] sortedBaseStations = new GPSBaseStation[baseStations.Length];
-    //     Array.Copy(baseStations, sortedBaseStations, baseStations.Length);
-    //     System.Array.Sort(distances, sortedBaseStations);
-    //     // Get the 3 closest base stations
-    //     ArraySegment<GPSBaseStation> closestBaseStations = new ArraySegment<GPSBaseStation>(sortedBaseStations, 0, 3);
-
-    //     // Compute the barycentric coordinates of the robot with respect to the 3 closest base stations.
-    //     Vector3d barycentric = Barycentric2D(
-    //         new Vector2d((double)closestBaseStations[0].transform.position.x, (double)closestBaseStations[0].transform.position.z),
-    //         new Vector2d((double)closestBaseStations[1].transform.position.x, (double)closestBaseStations[1].transform.position.z),
-    //         new Vector2d((double)closestBaseStations[2].transform.position.x, (double)closestBaseStations[2].transform.position.z),
-    //         new Vector2d((double)transform.position.x, (double)transform.position.z)
-    //     );
-
-    //     // Compute the GPS coordinates.
-    //     double latitude = barycentric.x * closestBaseStations[0].latitude + barycentric.y * closestBaseStations[1].latitude + barycentric.z * closestBaseStations[2].latitude;
-    //     double longitude = barycentric.x * closestBaseStations[0].longitude + (double)barycentric.y * closestBaseStations[1].longitude + barycentric.z * closestBaseStations[2].longitude;
-    //     // NOTE: Simple coordinate interpolation will break at the poles.
-    //     // To do this properly, we would need to slerp between three
-    //     // quaternions and then compute coords from the resulting quaternion.
-    //     // This is not critical for our purposes, so we will leave it as is.
-
-    //     return new Vector2d(latitude, longitude);
-    // }
-
     internal void FixedUpdate()
     {
         if (!initialized)
@@ -221,18 +107,25 @@ public class GPS : MonoBehaviour
             return;
         }
 
-        // Compute the GPS coordinates.
-        // Vector2d latLong = ComputeLatLongPlanarFit();
-        // Vector2d latLong = ComputeLatLongBarycentricInterpolation();
-        // if (latLong == Vector2d.zero)
-        // {
-        //     hasFix = false;
-        //     return;
-        // }
-        // double latitude = latLong.x;
-        // double longitude = latLong.y;
+        // Compute a random noise vector.
+        // double noiseRadius = MathNet.Numerics.Distributions.Normal.Sample(0, noiseStdDev);
+        // double noiseTheta = MathNet.Numerics.Distributions.ContinuousUniform.Sample(0, 2 * Math.PI);
+        // double noisePhi = MathNet.Numerics.Distributions.ContinuousUniform.Sample(0, Math.PI);
+        // var noise = new Vector3D(
+        //     noiseRadius * Math.Cos(noiseTheta) * Math.Sin(noisePhi),
+        //     noiseRadius * Math.Sin(noiseTheta) * Math.Sin(noisePhi),
+        //     noiseRadius * Math.Cos(noisePhi)
+        // );
+        var noiseVec = Vector<double>.Build.Random(3, new MathNet.Numerics.Distributions.Normal(0, noiseStdDev));
+        var noise = new Vector3D(noiseVec[0], noiseVec[1], noiseVec[2]);
 
+        // Get the robot's 2D position. Append a 1 to multiply with a 2D transformation matrix.
         var robotPos = Vector<double>.Build.DenseOfArray(new double[] { transform.position.x, transform.position.z, 1 });
+
+        // Add noise to the robot's position.
+        robotPos += Vector<double>.Build.DenseOfArray(new double[] { noise.X, noise.Y, 0 });
+
+        // Compute the latitude and longitude.
         var robotPosProj = procrustesTransform.Multiply(robotPos);
         var robotLatLon = earth.LatLonFromProj(centerLatLon, robotPosProj);
         double latitude = robotLatLon[0];
@@ -254,6 +147,7 @@ public class GPS : MonoBehaviour
 
         // Compute the altitude at the robot's Y.
         float altitude = altitudeAtZero + transform.position.y;
+        altitude += (float)noise.Z;
 
         lastCoords = new Coords
         {
@@ -262,6 +156,7 @@ public class GPS : MonoBehaviour
             altitude = altitude
         };
         hasFix = true;
+        lastCoordsWerePublished = false;
     }
 
     private async void Update()
@@ -273,12 +168,13 @@ public class GPS : MonoBehaviour
         }
 
         double currentTime = Time.unscaledTimeAsDouble;
-        if (currentTime - lastPublishTime < 1.0 / frequency)
+        if (currentTime - lastPublishTime < 1.0 / frequency || lastCoordsWerePublished)
         {
             return;
         }
         lastPublishTime = currentTime;
 
+        double variance = Math.Pow(noiseStdDev, 2);
         await publisher.Publish(new ROSBridge.SensorMsgs.NavSatFix
         {
             Header = new ROSBridge.StdMsgs.Header
@@ -293,9 +189,11 @@ public class GPS : MonoBehaviour
             },
             Latitude = hasFix ? lastCoords.latitude : 0,
             Longitude = hasFix ? lastCoords.longitude : 0,
-            Altitude = hasFix ? lastCoords.altitude : 0,
-            PositionCovariance = new double[9] { 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-            PositionCovarianceType = ROSBridge.SensorMsgs.NavSatFix.COVARIANCE_TYPE_UNKNOWN
+            Altitude = hasFix && enableAltitude ? lastCoords.altitude : 0,
+            PositionCovariance = new double[9] { variance, 0, 0, 0, variance, 0, 0, 0, variance },
+            PositionCovarianceType = ROSBridge.SensorMsgs.NavSatFix.COVARIANCE_TYPE_DIAGONAL_KNOWN
+            // NOTE: COVARIANCE_TYPE_UNKNOWN does not necessarily mean that the covariance will be automatically computed by navsat_transform_node.
         });
+        lastCoordsWerePublished = true;
     }
 }

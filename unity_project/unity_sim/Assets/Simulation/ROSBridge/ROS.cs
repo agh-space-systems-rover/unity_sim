@@ -215,9 +215,10 @@ namespace ROSBridge
                 return;
             }
 
-            // // Serialize the message.
+            // Serialize the message.
             string str = JsonConvert.SerializeObject(msg);
-            // Debug.Log("Sending: " + str);
+            // Replace "NaN" with NaN.
+            str = str.Replace("\"NaN\"", "NaN");
             var encoded = Encoding.UTF8.GetBytes(str);
 
             // Send it.
