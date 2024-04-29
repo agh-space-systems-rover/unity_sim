@@ -261,22 +261,22 @@ public class KalmanVehicle : MonoBehaviour
                 FrontLeft = new WheelState
                 {
                     Velocity = wheelStates.FrontLeft.Velocity,
-                    Angle = flWheel.steerAngle * Mathf.Deg2Rad
+                    Angle = -flWheel.steerAngle * Mathf.Deg2Rad
                 },
                 FrontRight = new WheelState
                 {
                     Velocity = wheelStates.FrontRight.Velocity,
-                    Angle = frWheel.steerAngle * Mathf.Deg2Rad
+                    Angle = -frWheel.steerAngle * Mathf.Deg2Rad
                 },
                 BackLeft = new WheelState
                 {
                     Velocity = wheelStates.BackLeft.Velocity,
-                    Angle = blWheel.steerAngle * Mathf.Deg2Rad
+                    Angle = -blWheel.steerAngle * Mathf.Deg2Rad
                 },
                 BackRight = new WheelState
                 {
                     Velocity = wheelStates.BackRight.Velocity,
-                    Angle = brWheel.steerAngle * Mathf.Deg2Rad
+                    Angle = -brWheel.steerAngle * Mathf.Deg2Rad
                 }
             });
         }
