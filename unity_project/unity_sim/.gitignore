@@ -2,6 +2,7 @@
 /Library
 /Logs
 /Temp
+/UserSettings
 
 # Mono crashlogs
 /mono_crash.*.blob
