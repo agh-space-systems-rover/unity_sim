@@ -98,6 +98,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   frameId: gps_link
   topic: /gps/fix
-  frequency: 1
+  frequency: 5
   enableAltitude: 0
-  noiseStdDev: 0
+  noiseStdDev: 2
+  driftUpdateRate: 0.2

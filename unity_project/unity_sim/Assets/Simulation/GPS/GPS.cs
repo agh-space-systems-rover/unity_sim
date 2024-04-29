@@ -24,13 +24,15 @@ public class GPS : MonoBehaviour
     private string topic = "/gps/fix";
 
     [SerializeField]
-    private float frequency = 1;
+    private float frequency = 5;
 
     [SerializeField]
     private bool enableAltitude = false;
 
     [SerializeField]
-    private float noiseStdDev = 0;
+    private float noiseStdDev = 1.0F;
+    [SerializeField]
+    private float driftUpdateRate = 0.2F;
 
     private ROS ros;
     private Publisher<ROSBridge.SensorMsgs.NavSatFix> publisher = null;
@@ -43,6 +45,9 @@ public class GPS : MonoBehaviour
     internal Coords lastCoords;
     internal bool hasFix = false;
     internal bool lastCoordsWerePublished = false;
+    private Vector3 targetDrift = Vector3.zero;
+    private Vector3 currentDrift = Vector3.zero;
+    private double lastDriftUpdateTime = 0.0;
 
     private async void Start()
     {
@@ -107,23 +112,22 @@ public class GPS : MonoBehaviour
             return;
         }
 
-        // Compute a random noise vector.
-        // double noiseRadius = MathNet.Numerics.Distributions.Normal.Sample(0, noiseStdDev);
-        // double noiseTheta = MathNet.Numerics.Distributions.ContinuousUniform.Sample(0, 2 * Math.PI);
-        // double noisePhi = MathNet.Numerics.Distributions.ContinuousUniform.Sample(0, Math.PI);
-        // var noise = new Vector3D(
-        //     noiseRadius * Math.Cos(noiseTheta) * Math.Sin(noisePhi),
-        //     noiseRadius * Math.Sin(noiseTheta) * Math.Sin(noisePhi),
-        //     noiseRadius * Math.Cos(noisePhi)
-        // );
-        var noiseVec = Vector<double>.Build.Random(3, new MathNet.Numerics.Distributions.Normal(0, noiseStdDev));
-        var noise = new Vector3D(noiseVec[0], noiseVec[1], noiseVec[2]);
+        // Update drift target every once in a while.
+        double now = Time.unscaledTimeAsDouble;
+        if (now - lastDriftUpdateTime > 1.0 / driftUpdateRate)
+        {
+            var noiseVec = Vector<double>.Build.Random(3, new MathNet.Numerics.Distributions.Normal(0, noiseStdDev));
+            targetDrift = new Vector3((float)noiseVec[0], (float)noiseVec[1], (float)noiseVec[2]);
+            lastDriftUpdateTime = now;
+        }
+        // Drift towards the target.
+        currentDrift = Vector3.Lerp(currentDrift, targetDrift, Time.fixedDeltaTime * 0.1F);
 
         // Get the robot's 2D position. Append a 1 to multiply with a 2D transformation matrix.
         var robotPos = Vector<double>.Build.DenseOfArray(new double[] { transform.position.x, transform.position.z, 1 });
 
         // Add noise to the robot's position.
-        robotPos += Vector<double>.Build.DenseOfArray(new double[] { noise.X, noise.Y, 0 });
+        robotPos += Vector<double>.Build.DenseOfArray(new double[] { currentDrift.x, currentDrift.z, 0 });
 
         // Compute the latitude and longitude.
         var robotPosProj = procrustesTransform.Multiply(robotPos);
@@ -147,7 +151,7 @@ public class GPS : MonoBehaviour
 
         // Compute the altitude at the robot's Y.
         float altitude = altitudeAtZero + transform.position.y;
-        altitude += (float)noise.Z;
+        altitude += currentDrift.z;
 
         lastCoords = new Coords
         {
