@@ -49,7 +49,7 @@ WheelCollider:
   m_SuspensionDistance: 0.3
   m_ForceAppPointDistance: 0
   m_Mass: 2
-  m_WheelDampingRate: 1
+  m_WheelDampingRate: 10
   m_ForwardFriction:
     m_ExtremumSlip: 0.4
     m_ExtremumValue: 1
@@ -120,7 +120,7 @@ WheelCollider:
   m_SuspensionDistance: 0.3
   m_ForceAppPointDistance: 0
   m_Mass: 2
-  m_WheelDampingRate: 1
+  m_WheelDampingRate: 10
   m_ForwardFriction:
     m_ExtremumSlip: 0.4
     m_ExtremumValue: 1
@@ -191,7 +191,7 @@ WheelCollider:
   m_SuspensionDistance: 0.3
   m_ForceAppPointDistance: 0
   m_Mass: 2
-  m_WheelDampingRate: 1
+  m_WheelDampingRate: 10
   m_ForwardFriction:
     m_ExtremumSlip: 0.4
     m_ExtremumValue: 1
@@ -313,6 +313,11 @@ MonoBehaviour:
   frWheelBone: {fileID: 6604413228608006853}
   blWheelBone: {fileID: 2254009489353382508}
   brWheelBone: {fileID: 2289347467693756120}
+  wheelStatesTopic: wheel_states
+  wheelStatesReturnTopic: wheel_states/return
+  wheelTempsTopic: wheel_temps
+  wheelStatesReturnRate: 5
+  wheelTempUpdateRate: 1
 --- !u!65 &5698785615585645352
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -544,7 +549,7 @@ WheelCollider:
   m_SuspensionDistance: 0.3
   m_ForceAppPointDistance: 0
   m_Mass: 2
-  m_WheelDampingRate: 1
+  m_WheelDampingRate: 10
   m_ForwardFriction:
     m_ExtremumSlip: 0.4
     m_ExtremumValue: 1
@@ -1115,22 +1120,22 @@ PrefabInstance:
     - target: {fileID: 8698260794984033198, guid: 2e827a4ae52f38707b35ab09ea2d4c67,
         type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 8698260794984033198, guid: 2e827a4ae52f38707b35ab09ea2d4c67,
         type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8698260794984033198, guid: 2e827a4ae52f38707b35ab09ea2d4c67,
         type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 8698260794984033198, guid: 2e827a4ae52f38707b35ab09ea2d4c67,
         type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8698260794984033198, guid: 2e827a4ae52f38707b35ab09ea2d4c67,
         type: 3}
@@ -1140,7 +1145,7 @@ PrefabInstance:
     - target: {fileID: 8698260794984033198, guid: 2e827a4ae52f38707b35ab09ea2d4c67,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: 90
       objectReference: {fileID: 0}
     - target: {fileID: 8698260794984033198, guid: 2e827a4ae52f38707b35ab09ea2d4c67,
         type: 3}
