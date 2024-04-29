@@ -17,7 +17,7 @@ source install/setup.bash
 
 Once the workspace is built, you need to find out which Unity version is required by this project:
 ```bash
-ros2 run unity_sim version
+ros2 run unity_sim unity_version
 ```
 And this command will yield something akin to `Unity 2023.1.9f1`. (Exact version may differ!)
 
