@@ -21,7 +21,7 @@ public class RealSense : MonoBehaviour
     [SerializeField]
     private int height = 360;
     [SerializeField]
-    private int fps = 30;
+    private int fps = 10;
     [SerializeField]
     private float vFov = 60.0F;
     [SerializeField]

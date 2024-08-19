@@ -28,6 +28,7 @@ public class Planet
         return _radius * angle;
     }
 
+    // Bearing is measured clockwise from north in degrees.
     public double GreatCircleBearing(Vector<double> latlon1, Vector<double> latlon2)
     {
         var phi1 = latlon1[0] * Math.PI / 180.0;
@@ -41,8 +42,8 @@ public class Planet
         var east1 = Up().CrossProduct(n1);
         var north1 = n1.CrossProduct(east1);
 
-        var nDiff2 = n2.DotProduct(n1) * n1;
-        var azimVec2 = (n2 - nDiff2).Normalize();
+        var nDiff2 = n2.DotProduct(n1) * n1; // projection of n2 onto n1
+        var azimVec2 = (n2 - nDiff2).Normalize(); // = surface-parallel vector from latlon1 towards latlon2
 
         var cosAlpha = north1.DotProduct(azimVec2);
         var sinAlpha = east1.DotProduct(azimVec2);

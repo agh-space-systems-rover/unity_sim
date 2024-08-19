@@ -5,5 +5,7 @@ using ROSBridge;
 
 public class GPSProbe : MonoBehaviour
 {
-    // See Editor/GPSProbeGUI.cs
+    // See GPSProbeGUI.cs
+    [TextArea(3,10)]
+    public string waypointsToLocalize;
 }

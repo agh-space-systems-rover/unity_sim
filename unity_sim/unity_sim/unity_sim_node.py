@@ -10,7 +10,7 @@ from unity_sim.util import find_unity_version
 class UnitySim(rclpy.node.Node):
     def __init__(self):
         super().__init__("unity_sim")
-        self.declare_parameter("scene", "Marsyard")
+        self.declare_parameter("scene", "ERC2023")
 
         # Find paths.
         project_dir = str(get_package_share_path("unity_sim") / "unity_project")
