@@ -64,7 +64,21 @@ public class GPSProbeGUI : Editor
                 // Add the result to the output string.
                 if (hasFix)
                 {
-                    waypointResults += wp.name + " " + lastCoords.latitude + " " + lastCoords.longitude + "\n";
+                    if (probe.localizeInENUFrame) {
+                        // Get the world yaw from procrustes.
+                        Matrix<double> procrustesTransform = gps.procrustesTransform;
+                        double yaw = -Math.Atan2(procrustesTransform[1, 0], procrustesTransform[0, 0]);
+                        yaw -= Math.PI / 2; // Correct to east=0, north=pi/2
+                        yaw = Math.Atan2(Math.Sin(yaw), Math.Cos(yaw)); // Normalize to (-pi, pi)
+
+                        // Transform raw waypoint coordinates to ENU frame.
+                        double x = -wp.x * Math.Sin(yaw) + wp.z * Math.Cos(yaw);
+                        double y = -wp.x * Math.Cos(yaw) - wp.z * Math.Sin(yaw);
+
+                        waypointResults += wp.name + " " + x + " " + y + "\n";
+                    } else {
+                        waypointResults += wp.name + " " + lastCoords.latitude + " " + lastCoords.longitude + "\n";
+                    }
                 }
                 else
                 {

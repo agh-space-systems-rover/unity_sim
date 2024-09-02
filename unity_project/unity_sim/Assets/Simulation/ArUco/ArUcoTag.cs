@@ -11,11 +11,13 @@ public class ArUcoTag : MonoBehaviour
     public enum Dict
     {
         _4x4_50,
+        _5x5_100,
     }
 
     private Dictionary<Dict, (string, int)> dictInfo = new Dictionary<Dict, (string, int)>
     {
         { Dict._4x4_50, ("4x4_50", 50) },
+        { Dict._5x5_100, ("5x5_100", 100) },
     };
 
     [SerializeField]

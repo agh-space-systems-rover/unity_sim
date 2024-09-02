@@ -4,6 +4,7 @@ from cv2 import aruco
 
 dicts_to_generate = {
     aruco.DICT_4X4_50: ("4X4_50", 50, 4),
+    aruco.DICT_5X5_100: ("5X5_100", 100, 5),
 }
 white_border = 1
 

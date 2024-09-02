@@ -15,7 +15,7 @@ Unity simulation environment for AGH Space Systems robotics projects.
 
 ## Getting Started
 
-Firstly, please clone the repository to your ROS 2 workspace:
+Clone the repository to your ROS 2 workspace and build it:
 ```bash
 cd src
 git clone git@github.com:agh-space-systems-rover/unity_sim.git
@@ -35,7 +35,7 @@ You need to install this version of Unity on your system. Start by installing Un
 ros2 launch unity_sim unity_sim.launch.py
 ```
 
-On the first run, the project will take a while to start, because it needs to download some packages from the web and import all the assets. Subsequent runs however will be much faster. Unity might still take up to a dozen of seconds to start, so you can always use the above command to run the simulation in a new terminal window, while you continue to restart other nodes separately.
+On the first run, the project will take a while to start, because it needs to download some packages from the web and import all the assets. However, subsequent runs will be much faster. Unity might still take up to a dozen of seconds to start, so you can always use the above command to run the simulation in a new terminal window, while you continue to restart other nodes separately.
 
 > [!IMPORTANT]
 > If there are errors in the Unity Console that mention problems with the RealSense plugin, you may need to manually remove `UnityRSPublisherPlugin.so` file from the `unity_sim/Assets/Simulation/RealSense` directory and restart the simulation to trigger a re-build.
@@ -45,11 +45,27 @@ If you wish to upgrade the simulation to a newer version of Unity, please launch
 
 ## IMU Simulation
 
-The simulation provides a virtual IMU sensor. It is a standalone [C# script](./unity_sim/Assets/Simulation/IMU/IMU.cs) that can be attached to any GameObject of choice. The sensor works by comparing the subsequent positions of the GameObject between this and previous physics frame. In this way it can recover the velocity. Then the velocity from the previous frame is compared with the current velocity to compute the acceleration. Angular values are calculated in an analogous way. The IMU's topic and report frequency is configurable in the settings of the script component. Data is published to `/imu/data`.
+The simulation provides a virtual IMU sensor. It is a standalone [C# script](./unity_sim/Assets/Simulation/IMU/IMU.cs) that can be attached to any GameObject of choice.
+
+The sensor works by comparing the subsequent positions of the GameObject between this and previous physics frame. In this way it can recover the velocity. Then the velocity from the previous frame is compared with the current velocity to compute the acceleration. Angular values are calculated in an analogous way.
+
+The IMU's topic and report frequency is configurable in the settings of the script component. Data is published to `/imu/data`.
 
 ## GPS Simulation
 
-A simulated GPS unit is by default attached as a prefab to Kalman. It is a GameObject with an attached [C# script](./unity_project/unity_sim/Assets/Simulation/GPS/GPS.cs). The script searches for GPSBaseStation objects in the scene and uses them as reference points to calculate the GPS position of the GPS unit. The position is published to `/gps/fix`. You can put an instance of the GPSProbe prefab in your scene and use a button in its custom editor UI to log info about the base stations and the current GPS position of the probe. Additionally, the probe will log the yaw of the whole Unity world relative to true north. It can be copy-pasted right into IMU's Yaw Offset field to make the IMU properly point to the north.
+A simulated GPS unit is by default attached as a prefab to Kalman. It is a GameObject with an attached [C# script](./unity_project/unity_sim/Assets/Simulation/GPS/GPS.cs). The script searches for GPSBaseStation objects in the scene and uses them as reference points to calculate the GPS position of the GPS unit. The position is published to `/gps/fix`.
+
+You can put an instance of the GPSProbe prefab in your scene and use a button in its custom editor UI to log info about the base stations and the current GPS position of the probe.
+
+Additionally, the probe will log the yaw of the whole Unity world relative to true north. It can be copy-pasted right into IMU's Yaw Offset field to make the IMU properly point to the north.
+
+You can also use GPSProbe to bulk-find the GPS coordinates of waypoints specified as X,Z positions in a text file:
+```
+W1 -1.4 2.3
+W2 0.5 1.2
+...
+```
+This way you can easily get a list of earth-referenced waypoints that can be imported into the Ground Station.
 
 ## How RealSense Cameras are Simulated
 
@@ -57,7 +73,7 @@ In Unity each RealSense is a prefab composed of a single `GameObject` that conta
 
 ## RealSense Publisher Plugin Development
 
-This Unity native plugin is a rather simple piece of code that forwards live feed from simulated RealSense cameras, over sockets, to a ROS 2 publisher node.
+This Unity native plugin forwards live feed from simulated RealSense cameras, over sockets, to a ROS 2 publisher node.
 It is distributed within this repository in binary form. The component is built for the AMD64 Linux platform. You **DO NOT NEED** to install the below components if you do not plan to develop the plugin and only want to use it.
 
 This software must be installed on the host computer in order to build the plugin:
@@ -93,5 +109,18 @@ Moving on, you can add in the robot and geographic reference points:
 4. Configure the FollowCamera Component on FollowCamera object to follow the Kalman object (to adjust the look-at pos, add an Empty GameObject as a child of Kalman and follow that).
 5. Now your view follows the robot.
 6. Add at least 3 GPSBaseStation prefabs. Configure each one with the assumed lat/long of the base station.
-7. Use GPSProbe to find the world's yaw relative to true north and put that value as IMU's yaw offset.
+7. Use GPSProbe to find the world's yaw relative to true north and put that value as IMU's yaw offset in **Kalman -> BaseLink -> IMU**.
 8. Now `/imu/data` and `/gps/fix` messages will be published with the correct data. You should be able to see Kalman's rotation and position on the map in Ground Station.
+
+## Adding ArUco Dictionaries
+
+To keep the repository size minimal, only the basic ArUco dictionaries are included.
+In case you need to simulate a world with a different type of ArUco tags, you must add the new dictionary to the Unity project:
+
+1. Modify [generate_aruco_textures.py](unity_project/unity_sim/generate_aruco_textures.py) to include the new dictionary.
+2. Run the script in its directory to generate new textures in `Assets/Simulation/ArUco/Textures`.
+3. Select the new textures in Unity and set their filter mode to **Point (no filter)** and wrap mode to **Clamp**.
+4. If the texture size is not a power of 2, set **Advanced -> Non Power of 2** to **None**.
+5. Modify [ArUcoTag.cs](unity_project/unity_sim/Assets/Simulation/ArUco/ArUcoTag.cs) to include the new dictionary.
+
+And now you should be able to access the dictionary in the ArUcoTag prefab.
