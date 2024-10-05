@@ -6,6 +6,7 @@ Unity simulation environment for AGH Space Systems robotics projects.
 
 ## Table of Contents
 
+- [Runtime Prerequisites](#runtime-prerequisites)
 - [Getting Started](#getting-started)
 - [IMU Simulation](#imu-simulation)
 - [GPS Simulation](#gps-simulation)
@@ -13,33 +14,52 @@ Unity simulation environment for AGH Space Systems robotics projects.
 - [RealSense Publisher Plugin Development](#realsense-publisher-plugin-development)
 - [Creating a New Map](#creating-a-new-map)
 
+## Runtime Prerequisites
+
+- CMake 3.20 or newer
+- any C++ 20 capable compiler
+
 ## Getting Started
 
 Clone the repository to your ROS 2 workspace and build it:
+
+> [!NOTE]
+> This is only for standalone usage.
+> You can skip this step if you use [`kalman_robot`](https://github.com/agh-space-systems-rover/kalman_robot) since `unity_sim` is already included there as a submodule.
+
 ```bash
-cd src
-git clone git@github.com:agh-space-systems-rover/unity_sim.git
-cd ..
-colcon build
+git clone git@github.com:agh-space-systems-rover/unity_sim.git src/unity_sim
+colcon build --symlink-install
 source install/setup.bash
 ```
 
-Once the workspace is built, you need to find out which Unity version is required by this project:
+Once the workspace is built, find out which Unity version is required by this project:
+
 ```bash
 ros2 run unity_sim unity_version
 ```
+
 And this command will yield something akin to `Unity 2023.1.9f1`. (Exact version may differ!)
 
 You need to install this version of Unity on your system. Start by installing Unity Hub using the [official instructions](https://docs.unity3d.com/hub/manual/InstallHub.html#install-hub-linux). (Users on Arch Linux can install `unityhub` from the AUR.) Once you have Unity Hub installed, it should prompt you to sign into your account in order to activate a personal license. When you are logged in, you can install the required version of Unity. Unity Hub only provides download links for the latest versions of Unity, so you will need to use the [Unity Archive](https://unity.com/releases/editor/archive) to find the version you need. From there you can click a button that will open Unity Hub and start the download. After the download is complete, it is best to test if your installation is able to run other demo projects, but you should be fine to close Unity Hub now and run the simulation:
+
+> [!IMPORTANT]
+> Make sure that [runtime prerequisites](#runtime-prerequisites) are installed:
+>
+> ```bash
+> # Arch Linux
+> sudo pacman -S cmake base-devel
+> # Ubuntu/Debian
+> sudo apt install cmake build-essential
+> # Fedora
+> sudo dnf install cmake gcc-c++
+> ```
+
 ```bash
 ros2 launch unity_sim unity_sim.launch.py
 ```
 
 On the first run, the project will take a while to start, because it needs to download some packages from the web and import all the assets. However, subsequent runs will be much faster. Unity might still take up to a dozen of seconds to start, so you can always use the above command to run the simulation in a new terminal window, while you continue to restart other nodes separately.
-
-> [!IMPORTANT]
-> If there are errors in the Unity Console that mention problems with the RealSense plugin, you may need to manually remove `UnityRSPublisherPlugin.so` file from the `unity_sim/Assets/Simulation/RealSense` directory and restart the simulation to trigger a re-build.
-> See the [RealSense Publisher Plugin Development](#RealSense-Publisher-Plugin-Development) section for more information.
 
 If you wish to upgrade the simulation to a newer version of Unity, please launch it using the Unity Hub. The project directory is located [here](./unity_project/unity_sim) and will need to be manually selected in the Unity Hub.
 
@@ -69,18 +89,17 @@ This way you can easily get a list of earth-referenced waypoints that can be imp
 
 ## How RealSense Cameras are Simulated
 
-In Unity each RealSense is a prefab composed of a single `GameObject` that contains a camera and the control script. The script renders the camera at a set rate and applies a shader that embeds the depth information in the alpha channel of the image. When a frame is available, it is read by the script onto the CPU, and from there [native C++ code](./unity_sim/unity_rs_publisher_plugin/) in invoked that sends the unmodified binary buffer over a Unix socket to the `unity_rs_publisher` ROS node. The node generates point clouds (this is currently disabled), image messages, camera info and publishes all this data. Importantly, the node subscribes to `{camera}/unity_rs_publisher/meta` topics to receive the cameras' configurations. Only then the node has all the required information to generate its own messages. 
+In Unity each RealSense is a prefab composed of a single `GameObject` that contains a camera and the control script. The script renders the camera at a set rate and applies a shader that embeds the depth information in the alpha channel of the image. When a frame is available, it is read by the script onto the CPU, and from there [native C++ code](./unity_project/unity_rs_publisher_plugin/) in invoked that sends the unmodified binary buffer over a Unix socket to the `unity_rs_publisher` ROS node. The node generates point clouds (this is currently disabled), image messages, camera info and publishes all this data. Importantly, the node subscribes to `{camera}/unity_rs_publisher/meta` topics to receive the cameras' configurations. Only then the node has all the required information to generate its own messages. 
 
 ## RealSense Publisher Plugin Development
 
 This Unity native plugin forwards live feed from simulated RealSense cameras, over sockets, to a ROS 2 publisher node.
-It is distributed within this repository in binary form. The component is built for the AMD64 Linux platform. You **DO NOT NEED** to install the below components if you do not plan to develop the plugin and only want to use it.
 
 This software must be installed on the host computer in order to build the plugin:
 - CMake
 - C++ 20 compiler
 
-The plugin will only be recompiled if the simulation [starts](./unity_sim/unity_sim/__init__.py) and the [binary file](./unity_sim/Assets/Simulation/RealSense/UnityRSPublisherPlugin.so) is not found in the assets folder. That is why you need to manually remove it and restart the simulation to recompile the plugin.
+The plugin will only be recompiled if the simulation [starts](./unity_sim/unity_sim/unity_sim_node.py) and the binary file is not found at `./unity_project/unity_sim/Assets/Simulation/RealSense/UnityRSPublisherPlugin.so`. That is why you need to manually remove it and restart the simulation to recompile the plugin.
 
 ## Creating a New Map
 
