@@ -9,3 +9,7 @@
 
 # Generic logfiles
 *.log
+
+# Native RealSense plugin artifact and meta
+/Assets/Simulation/RealSense/UnityRSPublisherPlugin.so
+/Assets/Simulation/RealSense/UnityRSPublisherPlugin.so.meta
