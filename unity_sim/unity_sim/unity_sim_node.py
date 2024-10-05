@@ -3,6 +3,7 @@ import shutil
 import rclpy
 import rclpy.node
 import subprocess
+import signal
 from ament_index_python import get_package_share_path
 from unity_sim.util import find_unity_version
 
@@ -15,10 +16,10 @@ class UnitySim(rclpy.node.Node):
         # Find paths.
         project_dir = str(get_package_share_path("unity_sim") / "unity_project")
         # (Either Distrobox host home or just $HOME without Distrobox.)
-        running_in_distrobox = "DISTROBOX_HOST_HOME" in os.environ
+        self.running_in_distrobox = "DISTROBOX_HOST_HOME" in os.environ
         home = (
             os.environ.get("DISTROBOX_HOST_HOME")
-            if running_in_distrobox
+            if self.running_in_distrobox
             else os.environ.get("HOME")
         )
 
@@ -29,7 +30,7 @@ class UnitySim(rclpy.node.Node):
             self.get_logger().info("Native plugin not found. Building it now...")
 
             # Build unity_rs_publisher_plugin on the host using CMake
-            cmd_prefix = ["distrobox-host-exec"] if running_in_distrobox else []
+            cmd_prefix = ["distrobox-host-exec"] if self.running_in_distrobox else []
 
             native_plugin_build_dir = native_plugin_dir + "/build"
             os.makedirs(native_plugin_build_dir, exist_ok=True)
@@ -78,29 +79,43 @@ class UnitySim(rclpy.node.Node):
 
         # Prepare a command to run and kill Unity.
         run_cmd = [os.path.join(unity_dir, "Editor/Unity"), "-openfile", scene_path]
-        kill_cmd = ["pkill", "-9", "-f", " ".join(run_cmd)]
+        self.kill_cmd = ["pkill", "-9", "-f", '"' + " ".join(run_cmd) + '"']
 
         # Run Unity in background.
-        if running_in_distrobox:
+        if self.running_in_distrobox:
             run_cmd = ["distrobox-host-exec"] + run_cmd
         self.get_logger().info(f"Running Unity with command: {' '.join(run_cmd)}")
-        subprocess.Popen(run_cmd)
+        self.process = subprocess.Popen(
+            run_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
 
-        # Spin until killed.
-        try:
-            rclpy.spin(self)
-        except KeyboardInterrupt:
-            self.get_logger().info("Shutting down Unity:\n" + " ".join(kill_cmd))
-            if running_in_distrobox:
-                kill_cmd = ["distrobox-host-exec"] + kill_cmd
-            subprocess.run(kill_cmd)
-            exit(0)
+        self.terminating = False
+        self.timer = self.create_timer(0.1, self.timer_callback)
+        signal.signal(signal.SIGINT, self.sigint_handler)
+
+    def sigint_handler(self, sig, frame):
+        self.terminating = True
+
+    def timer_callback(self):
+        if self.terminating:
+            self.kill_cmd += ["2>&1", ">", "/dev/null"]
+            if self.running_in_distrobox:
+                self.kill_cmd = ["distrobox-host-exec"] + self.kill_cmd
+            self.get_logger().info("Shutting down Unity:\n" + " ".join(self.kill_cmd))
+            os.system(" ".join(self.kill_cmd))
+            raise KeyboardInterrupt
+        elif self.process.poll() is not None:
+            self.get_logger().info("Unity has exited.")
+            raise KeyboardInterrupt
 
 
 def main():
     try:
         rclpy.init()
         node = UnitySim()
+        rclpy.spin(node)
         node.destroy_node()
         rclpy.shutdown()
     except KeyboardInterrupt:
