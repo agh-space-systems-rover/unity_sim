@@ -1,4 +1,8 @@
-#include <cv_bridge/cv_bridge.h>
+#ifdef ROS_HUMBLE
+	#include <cv_bridge/cv_bridge.h>
+#else
+	#include <cv_bridge/cv_bridge.hpp>
+#endif
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>

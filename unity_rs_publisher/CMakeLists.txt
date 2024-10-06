@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.8)
 project(unity_rs_publisher)
 
+# Read ROS_DISTRO and if it is "humble", define ROS_HUMBLE.
+if($ENV{ROS_DISTRO} STREQUAL "humble")
+  add_definitions(-DROS_HUMBLE)
+endif()
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
