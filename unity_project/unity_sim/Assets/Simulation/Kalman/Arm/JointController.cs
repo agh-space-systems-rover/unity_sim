@@ -64,7 +64,7 @@ public class JointController : MonoBehaviour
 
 
     private float[] gearRatio = { 0.0125f, 0.00625f, 0.00625f, 0.01f, 0.0131034f, 0.0131034f, 1.0f };
-    private float[] invertDirection = { -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f };
+    private float[] invertDirection = { -1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f };
 
     // LIFE CYCLE
 
@@ -112,10 +112,10 @@ public class JointController : MonoBehaviour
                     targetPosition = (float)(CurrentPrimaryAxisRotation() + targetVelocity * invertDirection[(int)jointId]);
             }
             float positionChange = Mathf.Clamp(pid.Update(CurrentPrimaryAxisRotation(), targetPosition, Time.fixedDeltaTime), -maxSpeed * Time.fixedDeltaTime, maxSpeed * Time.fixedDeltaTime);
-            // if (jointId == JointId.Joint1)
-            // {
-            //     UnityEngine.Debug.Log($"Joint {jointId} position {CurrentPrimaryAxisRotation()} target {targetPosition} change {positionChange}");
-            // }
+            if (jointId == JointId.Joint1)
+            {
+                UnityEngine.Debug.Log($"Joint {jointId} position {CurrentPrimaryAxisRotation()} target {targetPosition} change {positionChange}");
+            }
             // UnityEngine.Debug.Log($"Joint {jointId} position {CurrentPrimaryAxisRotation()} target {targetPosition} change {positionChange}");
             RotateTo(CurrentPrimaryAxisRotation() + positionChange);
         }
