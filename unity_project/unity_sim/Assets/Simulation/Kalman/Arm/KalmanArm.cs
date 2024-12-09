@@ -82,6 +82,11 @@ public class CanDriver
             frameHandler(frame);
         }
     }
+
+    public void SendFastStatus(Dictionary<JointId, JointController> armControllers)
+    {
+
+    }
 }
 
 public enum CanMessageIds
@@ -93,115 +98,6 @@ public enum CanMessageIds
 }
 public class KalmanArm : MonoBehaviour
 {
-    // class VirtualJoint
-    // {
-    //     public Transform joint;
-    //     public int canId;
-
-    //     public enum ControlMode
-    //     {
-    //         SPEED,
-    //         POSITION,
-    //         POS_VEL,
-    //     }
-
-    //     public enum CanMessageIds
-    //     {
-    //         SET_VELOCITY = 0x025,
-    //         SET_POSITION = 0x026,
-    //         CONTROL_TYPE = 0x035,
-    //     }
-
-    //     public ControlMode mode;
-
-    //     public float position; // in deg
-
-    //     public float targetPosition;
-
-    //     public double velocity; // in RPM
-
-    //     public PID pid;
-
-    //     public float maxSpeed = 60.0f;
-
-    //     public float[] gearRatio = { 0.0125f, 0.00625f, 0.00625f, 0.01f, 0.0131034f, 0.0131034f };
-
-    //     public VirtualJoint(Transform joint, int canId)
-    //     {
-    //         this.joint = joint;
-    //         this.canId = canId;
-
-    //         mode = ControlMode.POS_VEL;
-    //         position = joint.rotation.eulerAngles[1];
-    //         targetPosition = position;
-    //         pid = new PID(10.0f, 0.01f, 0.01f);
-    //     }
-
-    //     public CanFdFrame GetStatusFrame()
-    //     {
-    //         CanFdFrame frame = new()
-    //         {
-    //             CanId = (uint)canId + 0x036,
-    //             Length = 6
-    //         };
-    //         frame.Data = new byte[frame.Length];
-    //         frame.Data[0] = 0x00;
-    //         frame.Data[1] = 0x00;
-    //         frame.Data[2] = 0x00;
-    //         frame.Data[3] = 0x00;
-    //         frame.Data[4] = 0x00;
-    //         frame.Data[5] = 0x00;
-    //         return frame;
-    //     }
-
-    //     public void ParseFrame(CanFdFrame frame)
-    //     {
-    //         // UnityEngine.Debug.Log($"Received frame on joint {joint} with id {frame.CanId}");
-    //         int msgId = (int)frame.CanId & (0x7F);
-    //         int jointId = ((int)frame.CanId >> 7) - 1;
-
-
-    //         switch (msgId)
-    //         {
-    //             case (int)CanMessageIds.SET_VELOCITY:
-    //                 velocity = BitConverter.ToInt16(frame.Data) * gearRatio[jointId] * 0.6;
-    //                 break;
-
-    //             case (int)CanMessageIds.SET_POSITION:
-    //                 // targetPosition = (float)(BitConverter.ToInt32(frame.Data) * 100.0);
-    //                 break;
-
-    //             case (int)CanMessageIds.CONTROL_TYPE:
-    //                 mode = (ControlMode)frame.Data[0];
-    //                 break;
-
-    //             default:
-    //                 break;
-    //         }
-
-    //     }
-
-
-    //     public void Update()
-    //     {
-    //         if (joint.name == "dof1")
-    //         {
-    //             UnityEngine.Debug.Log($"Updating joint {joint} with mode {mode}, position {position}, target {targetPosition}, velocity {velocity}");
-    //         }
-    //         if (this.mode == ControlMode.POS_VEL)
-    //         {
-    //             if (Math.Abs(velocity) > 0.001)
-    //                 targetPosition = (float)(position + velocity);
-    //         }
-    //         position += Mathf.Clamp(pid.Update(position, targetPosition, Time.fixedDeltaTime), -maxSpeed * Time.fixedDeltaTime, maxSpeed * Time.fixedDeltaTime);
-
-    //         // set only y rotation, with x and z not being changed
-    //         joint.localRotation = Quaternion.Euler(joint.localRotation.eulerAngles[0], position, joint.localRotation.eulerAngles[2]);
-
-
-    //     }
-    // }
-
     [SerializeField]
     public List<GameObject> armObjects = new List<GameObject>();
 
@@ -273,6 +169,19 @@ public class KalmanArm : MonoBehaviour
     void Update()
     {
         // UnityEngine.Debug.Log($"{CanDriver.canFrames.Count} frames in queue");
+        /**
+ * @brief Structure representing the fast status (only vel and pos).
+ *
+ * @param velocity int16_t Velocity - bytes 0-1
+ * @param position int32_t Position - bytes 2-5
+//  */
+// typedef struct __attribute__((__packed__))
+// {
+//   int16_t velocity;  // RPM*10
+//   int32_t position;  // pozycja 0-36000 (co 0.01 deg)
+// } jointMotorFastStatus_t;
+// #define CMD_JOINT_FAST_STATUS 0x036
+// #define LEN_JOINT_FAST_STATUS 6
 
     }
 }
