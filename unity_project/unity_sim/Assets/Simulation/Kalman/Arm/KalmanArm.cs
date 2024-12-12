@@ -14,6 +14,15 @@ using UnityEngine.PlayerLoop;
 using MathNet.Numerics.LinearAlgebra;
 using UnityEngine.InputSystem.EnhancedTouch;
 
+public enum CanMessageIds
+{
+    SET_VELOCITY = 0x025,
+    SET_POSITION = 0x026,
+    CONTROL_TYPE = 0x035,
+    GRIPPER = 0xE3,
+    FAST_STATUS = 0x036
+}
+
 public class CanDriver
 {
     CanNetworkInterface vcan0 = CanNetworkInterface.GetAllInterfaces(true).First(iface => iface.Name.Equals("vcan0"));
@@ -83,19 +92,25 @@ public class CanDriver
         }
     }
 
-    public void SendFastStatus(Dictionary<JointId, JointController> armControllers)
+    public void SendFastStatus(ref Dictionary<JointId, JointController> armControllers)
     {
-
+        foreach (JointId jointId in armControllers.Keys)
+        {
+            JointController controller = armControllers[jointId];
+            CanFdFrame frame = new CanFdFrame
+            {
+                CanId = (uint)jointId << 7 | (uint)CanMessageIds.FAST_STATUS,
+                Length = 6
+            };
+            byte[] data = new byte[6];
+            BitConverter.GetBytes((short)(controller.GetVelocityRPM() * 10)).CopyTo(data, 0);
+            BitConverter.GetBytes((int)(controller.GetPosition() * 100)).CopyTo(data, 2);
+            frame.Data = data;
+            LibcNativeMethods.Write(socketHandle, ref frame, Marshal.SizeOf(typeof(CanFdFrame)));
+        }
     }
 }
 
-public enum CanMessageIds
-{
-    SET_VELOCITY = 0x025,
-    SET_POSITION = 0x026,
-    CONTROL_TYPE = 0x035,
-    GRIPPER = 0xE3,
-}
 public class KalmanArm : MonoBehaviour
 {
     [SerializeField]
@@ -168,20 +183,6 @@ public class KalmanArm : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // UnityEngine.Debug.Log($"{CanDriver.canFrames.Count} frames in queue");
-        /**
- * @brief Structure representing the fast status (only vel and pos).
- *
- * @param velocity int16_t Velocity - bytes 0-1
- * @param position int32_t Position - bytes 2-5
-//  */
-// typedef struct __attribute__((__packed__))
-// {
-//   int16_t velocity;  // RPM*10
-//   int32_t position;  // pozycja 0-36000 (co 0.01 deg)
-// } jointMotorFastStatus_t;
-// #define CMD_JOINT_FAST_STATUS 0x036
-// #define LEN_JOINT_FAST_STATUS 6
-
+        driver.SendFastStatus(ref armControllers);
     }
 }

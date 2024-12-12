@@ -59,7 +59,7 @@ public class KalmanVehicle : MonoBehaviour
     private void OnMove(InputValue value)
     {
         Vector2 input = value.Get<Vector2>();
-        
+
         float turnRadius = -manualTurnRadius / input.x;
         float linearVelocity = manualSpeed;
         float angularVelocity = manualSpeed / turnRadius;
@@ -255,7 +255,7 @@ public class KalmanVehicle : MonoBehaviour
         if (now - lastReturnTime > 1.0 / wheelStatesReturnRate && returnPublisher != null)
         {
             lastReturnTime = now;
-            
+
             await returnPublisher.Publish(new WheelStates
             {
                 FrontLeft = new WheelState
@@ -330,6 +330,7 @@ public class KalmanVehicle : MonoBehaviour
         CopyWheelTransform(frWheel, frSuspBone, frTurnBone, frWheelBone, true, true);
         CopyWheelTransform(blWheel, blSuspBone, blTurnBone, blWheelBone, false, false);
         CopyWheelTransform(brWheel, brSuspBone, brTurnBone, brWheelBone, true, false);
+        TeleportArm();
     }
 
     private void CopyWheelTransform(WheelCollider wheel, Transform suspBone, Transform turnBone, Transform wheelBone, bool rightSide, bool front)
@@ -380,5 +381,23 @@ public class KalmanVehicle : MonoBehaviour
         // Apply rotation about suspension bone's up axis.
         newRot = ogBoneRots[suspBone] * Quaternion.Euler(0, angle * (rightSide ? -1 : 1) * (front ? 2 : 1), 0);
         suspBone.localRotation = Quaternion.Slerp(suspBone.localRotation, newRot, Time.deltaTime * 10.0F);
+    }
+
+    private void TeleportArm()
+    {
+        var armObject = GameObject.Find("ArmLink");
+        var baseObject = GameObject.Find("BaseLink");
+        Vector3 position = baseObject.transform.position;
+        Quaternion rotation = baseObject.transform.rotation;
+
+        Vector3 baseToArm = new Vector3(0.0f, -0.0f, 0.157f);
+        baseToArm = rotation * baseToArm;
+        Quaternion baseToArmRotation = Quaternion.Euler(0, 90, 0);
+
+        var armTransform = Matrix4x4.TRS(position + baseToArm, rotation * baseToArmRotation, Vector3.one);
+
+
+        armObject.transform.position = armTransform.GetColumn(3);
+        armObject.transform.rotation = armTransform.rotation;
     }
 }

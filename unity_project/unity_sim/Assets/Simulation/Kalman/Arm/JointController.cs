@@ -39,8 +39,10 @@ public class JointController : MonoBehaviour
 
     private ControlMode mode = ControlMode.POS_VEL;
 
-    private float targetPosition, diffPosition;
-    private float targetVelocity, diffVelocity;
+    private float targetPosition, diffPosition; // in degrees
+    private float targetVelocity, diffVelocity; // in degrees per second
+
+    private float velocity = 0.0f;
 
     private PID pid = new PID(1.0f, 0.0f, 0.0f);
     private const float maxSpeed = 30.0f;
@@ -99,17 +101,18 @@ public class JointController : MonoBehaviour
             if (mode == ControlMode.POS_VEL)
             {
                 if (Math.Abs(realVelocity) > 0.001)
-                    targetPosition = (float)(CurrentPrimaryAxisRotation() + realVelocity * invertDirection[(int)jointId]);
+                    targetPosition = (float)(CurrentPrimaryAxisRotation() + realVelocity * Time.fixedDeltaTime * invertDirection[(int)jointId]);
             }
             float positionChange = Mathf.Clamp(pid.Update(CurrentPrimaryAxisRotation(), targetPosition, Time.fixedDeltaTime), -maxSpeed * Time.fixedDeltaTime, maxSpeed * Time.fixedDeltaTime);
             RotateTo(CurrentPrimaryAxisRotation() + positionChange);
+            velocity = positionChange / Time.fixedDeltaTime;
         }
         else
         {
             if (mode == ControlMode.POS_VEL)
             {
                 if (Math.Abs(targetVelocity) > 0.001)
-                    targetPosition = (float)(CurrentPrimaryAxisRotation() + targetVelocity * invertDirection[(int)jointId]);
+                    targetPosition = (float)(CurrentPrimaryAxisRotation() + targetVelocity * Time.fixedDeltaTime * invertDirection[(int)jointId]);
             }
             float positionChange = Mathf.Clamp(pid.Update(CurrentPrimaryAxisRotation(), targetPosition, Time.fixedDeltaTime), -maxSpeed * Time.fixedDeltaTime, maxSpeed * Time.fixedDeltaTime);
             if (jointId == JointId.Joint1)
@@ -118,6 +121,7 @@ public class JointController : MonoBehaviour
             }
             // UnityEngine.Debug.Log($"Joint {jointId} position {CurrentPrimaryAxisRotation()} target {targetPosition} change {positionChange}");
             RotateTo(CurrentPrimaryAxisRotation() + positionChange);
+            velocity = positionChange / Time.fixedDeltaTime;
         }
     }
 
@@ -175,5 +179,15 @@ public class JointController : MonoBehaviour
     public void SetDiffVelocity(float diffVelocity)
     {
         this.diffVelocity = diffVelocity * gearRatio[(int)jointId];
+    }
+
+    public float GetVelocityRPM()
+    {
+        return velocity / (6.0f * gearRatio[(int)jointId]);
+    }
+
+    public float GetPosition()
+    {
+        return CurrentPrimaryAxisRotation();
     }
 }
