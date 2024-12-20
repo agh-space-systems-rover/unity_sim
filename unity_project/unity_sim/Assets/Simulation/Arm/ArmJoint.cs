@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 enum Axis
 {
@@ -169,9 +170,7 @@ public class ArmJoint : MonoBehaviour
     {
         // Count number of grabbed objects
         if (isThisJaw()) {
-            Rigidbody otherRb = collision.gameObject.GetComponent<Rigidbody>();
-            ArmJoint otherJoint = collision.gameObject.GetComponent<ArmJoint>();
-            if (otherRb != null && otherJoint == null) {
+            if (isGameObjectGrabbable(collision.gameObject)) {
                 grabCount++;
                 Debug.Log("Grabbed " + collision.gameObject.name + " (" + grabCount + ")");
             }
@@ -191,9 +190,7 @@ public class ArmJoint : MonoBehaviour
     {
         // Count number of grabbed objects
         if (isThisJaw()) {
-            Rigidbody otherRb = collision.gameObject.GetComponent<Rigidbody>();
-            ArmJoint otherJoint = collision.gameObject.GetComponent<ArmJoint>();
-            if (otherRb != null && otherJoint == null) {
+            if (isGameObjectGrabbable(collision.gameObject)) {
                 Debug.Log("Released " + collision.gameObject.name + " (" + grabCount + ")");
                 grabCount--;
             }
@@ -359,6 +356,35 @@ public class ArmJoint : MonoBehaviour
             } else {
                 tf = null;
             }
+        }
+        return false;
+    }
+
+    private bool isGameObjectGrabbable(GameObject go) {
+        Rigidbody rb = go.GetComponent<Rigidbody>();
+        if (rb) {
+            // Check if gameobject is our parent
+            Transform tf = transform;
+            while (tf)
+            {
+                if (tf.gameObject == go) {
+                    return false;
+                }
+                tf = tf.parent;
+            }
+            // check if gameobject is a child
+            Stack<Transform> stack = new Stack<Transform>();
+            stack.Push(transform);
+            while (stack.Count > 0) {
+                Transform current = stack.Pop();
+                foreach (Transform child in current) {
+                    if (child.gameObject == go) {
+                        return false;
+                    }
+                    stack.Push(child);
+                }
+            }
+            return true;
         }
         return false;
     }
