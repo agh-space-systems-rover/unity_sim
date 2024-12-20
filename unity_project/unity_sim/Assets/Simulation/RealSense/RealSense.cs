@@ -13,6 +13,9 @@ using System.Threading;
 using System.Text;
 using System.Runtime.InteropServices;
 using Unity.Collections.LowLevel.Unsafe;
+using UnityEngine.Rendering.Universal;
+using UnityEngine.Rendering.RenderGraphModule;
+using UnityEditor;
 
 public class RealSense : MonoBehaviour
 {
@@ -31,11 +34,12 @@ public class RealSense : MonoBehaviour
     [SerializeField]
     private string id = "camera";
 
-    private Camera cam;
-    bool frameAvailable = false; // Feels a bit smoother than cam.Render()
-    ROSBridge.BuiltinInterfaces.Time frameStamp;
-    RenderTexture asyncRt = null;
-    Material depthMaterial = null;
+    private Camera cam = null;
+    private Camera currentRenderCam = null;
+    private bool frameAvailable = false; // Feels a bit smoother than cam.Render()
+    private ROSBridge.BuiltinInterfaces.Time frameStamp;
+    private RenderTexture asyncRt = null;
+    private Material depthMaterial = null;
 
     [DllImport("UnityRSPublisherPlugin")]
     private static extern void OpenBridgeConnection(string id, int width, int height, float vFov, float depthMin, float depthMax);
@@ -46,11 +50,14 @@ public class RealSense : MonoBehaviour
 
     private async void Start()
     {
+        RenderTexture rt = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32);
+        rt.depthStencilFormat = GraphicsFormat.D24_UNorm_S8_UInt;
+
         // camera settings
         cam = GetComponent<Camera>();
         cam.enabled = true;
         cam.depthTextureMode = DepthTextureMode.Depth;
-        cam.targetTexture = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32);
+        cam.targetTexture = rt;
         cam.nearClipPlane = 0.01F;
         cam.farClipPlane = 3000;
         cam.fieldOfView = vFov;
@@ -96,7 +103,8 @@ public class RealSense : MonoBehaviour
         var buffer = new NativeArray<byte>(width * height * 4, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
 
         float lastCaptureTime = 0.0F;
-        // // debug fps counter
+
+        // debug fps counter
         // float frameTime = 0.016F;
         // float lastFpsCaptureTime = 0.0F;
         // float lastFpsPrintTime = 0.0F;
@@ -195,18 +203,23 @@ public class RealSense : MonoBehaviour
 
     private void OnEnable()
     {
-        RenderPipelineManager.endCameraRendering += RenderPipelineManager_endCameraRendering;
+        EditorApplication.LockReloadAssemblies();
+        RenderPipelineManager.beginCameraRendering += RenderPipelineManager_beginCameraRendering;
     }
 
     private void OnDisable()
     {
-        RenderPipelineManager.endCameraRendering -= RenderPipelineManager_endCameraRendering;
+        RenderPipelineManager.beginCameraRendering -= RenderPipelineManager_beginCameraRendering;
+        EditorApplication.UnlockReloadAssemblies();
     }
 
-    private void RenderPipelineManager_endCameraRendering(ScriptableRenderContext context, Camera camera)
+    private void RenderPipelineManager_beginCameraRendering(ScriptableRenderContext context, Camera camera) {
+        currentRenderCam = camera;
+    }
+
+    void OnRenderObject()
     {
-        if (camera == cam && asyncRt != null && depthMaterial != null)
-        {
+        if (currentRenderCam == cam) {
             cam.enabled = false;
 
             // Save the time stamp of the frame.
@@ -214,7 +227,6 @@ public class RealSense : MonoBehaviour
             // Blit through the depth shader to the async gbuffer.
             depthMaterial.SetTexture("_ColorTex", cam.targetTexture);
             Graphics.Blit(cam.targetTexture, asyncRt, depthMaterial);
-
 
             frameAvailable = true;
         }

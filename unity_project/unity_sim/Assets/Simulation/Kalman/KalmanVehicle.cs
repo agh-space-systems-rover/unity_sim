@@ -118,7 +118,7 @@ public class KalmanVehicle : MonoBehaviour
     private async void Start()
     {
         // Override center of mass for better handling.
-        GetComponent<Rigidbody>().centerOfMass = new Vector3(0, 0.2F, 0);
+        GetComponent<Rigidbody>().centerOfMass = new Vector3(0, 0.25F, -0.1F);
 
         // Initialize ROSBridge connection.
         ros = new ROS();

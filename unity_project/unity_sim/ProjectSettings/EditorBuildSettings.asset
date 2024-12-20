@@ -8,5 +8,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Simulation/Scenes/ERC2023.unity
     guid: 829503f86f0b4ebbe9503ff9e980aae3
-  m_configObjects: {}
+  m_configObjects:
+    com.unity.input.settings.actions: {fileID: -944628639613478452, guid: bdc2b1e1ab4aca5bcb5d52d637ab6dbb,
+      type: 3}
   m_UseUCBPForAssetBundles: 0

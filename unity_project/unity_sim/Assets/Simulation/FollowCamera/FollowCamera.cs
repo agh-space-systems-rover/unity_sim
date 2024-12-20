@@ -12,7 +12,7 @@ public class FollowCamera : MonoBehaviour
     private const float MOUSE_SENSITIVITY = 0.1F;
 
     [SerializeField]
-    private GameObject target;
+    private List<GameObject> targets;
 
     // private Vector2 lastMouseInput = Vector2.zero;
     private bool hasFocus = false;
@@ -29,7 +29,7 @@ public class FollowCamera : MonoBehaviour
         lastTimeMouseMoved = Time.time;
         if (!manual)
         {
-            manualRadius = (transform.position - target.transform.position).magnitude;
+            manualRadius = (transform.position - meanTargetPos()).magnitude;
         }
         manual = true;
     }
@@ -46,30 +46,37 @@ public class FollowCamera : MonoBehaviour
 
     void Start()
     {
+        if (targets.Count == 0)
+        {
+            Debug.LogError("No targets for FollowCamera.");
+        }
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
 
     void Update()
     {
+        Vector3 meanPos = meanTargetPos();
+
         // Find target camera position.
         Vector3 targetCameraPos;
         if (manual)
         {
             // Use camera angle and current radius.
 
-            targetCameraPos = target.transform.position + transform.rotation * Vector3.back * manualRadius;
+            targetCameraPos = meanPos + transform.rotation * Vector3.back * manualRadius;
         }
         else
         {
             // Use relative position of objects.
 
             // Compute 2D ground-plane vector from target to camera.
-            Vector3 targetToCamera2d = transform.position - target.transform.position;
+            Vector3 targetToCamera2d = transform.position - meanPos;
             targetToCamera2d.y = 0.0F;
 
             // Position camera on a FOLLOW_RADIUS ring around the target at FOLLOW_HEIGHT.
-            targetCameraPos = target.transform.position;
+            targetCameraPos = meanPos;
             targetCameraPos.y += FOLLOW_HEIGHT;
             targetCameraPos += targetToCamera2d.normalized * FOLLOW_RADIUS;
         }
@@ -110,8 +117,8 @@ public class FollowCamera : MonoBehaviour
             // eulerDelta.x = Mathf.Clamp(eulerDelta.x, -10, 10);
             // eulerDelta.y = Mathf.Clamp(eulerDelta.y, -10, 10);
 
-            transform.RotateAround(target.transform.position, Vector3.up, eulerDelta.y);
-            transform.RotateAround(target.transform.position, transform.right, eulerDelta.x);
+            transform.RotateAround(meanPos, Vector3.up, eulerDelta.y);
+            transform.RotateAround(meanPos, transform.right, eulerDelta.x);
         }
 
         // Find terrain height in camera's XZ position.
@@ -135,6 +142,22 @@ public class FollowCamera : MonoBehaviour
         }
 
         // Rotate the camera to look at the target.
-        transform.LookAt(target.transform);
+        transform.LookAt(meanPos);
+    }
+
+    Vector3 meanTargetPos() {
+        if (targets.Count == 0)
+        {
+            return Vector3.zero;
+        }
+
+        // Compute the mean position of the targets.
+        Vector3 meanPosition = Vector3.zero;
+        foreach (GameObject target in targets)
+        {
+            meanPosition += target.transform.position;
+        }
+        meanPosition /= targets.Count;
+        return meanPosition;
     }
 }
