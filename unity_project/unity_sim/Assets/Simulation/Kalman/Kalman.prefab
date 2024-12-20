@@ -1072,7 +1072,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   autonomyMaterialNameRegex: autonomy
-  maxIntensity: 3
+  hdrIntensity: 5
   setColorService: ueuos/set_color
   setStateService: ueuos/set_state
   setEffectService: ueuos/set_effect
