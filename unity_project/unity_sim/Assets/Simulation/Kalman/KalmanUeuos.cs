@@ -16,7 +16,7 @@ public class KalmanUeuos : MonoBehaviour
     private static Func<float, Color> bootColorFunction = time => {
         const int numCycles = 10;
         const float cycleSpeed = 20;
-        const float cycleSteepness = 3;
+        const float cycleSteepness = 4;
         float scaledX = time * cycleSpeed;
         if (scaledX < 2*Mathf.PI * numCycles)
         {
@@ -32,7 +32,7 @@ public class KalmanUeuos : MonoBehaviour
     [SerializeField]
     private string autonomyMaterialNameRegex = "autonomy";
     [SerializeField]
-    private float maxIntensity = 5.0F;
+    private float hdrIntensity = 5.0F;
     [SerializeField]
     private string setColorService = "ueuos/set_color";
     [SerializeField]
@@ -136,7 +136,7 @@ public class KalmanUeuos : MonoBehaviour
         if (colorFunction != null)
         {
             // Shader is URP/Lit.
-            autonomyMaterial.SetColor("_EmissionColor", colorFunction(colorFunctionTimer) * maxIntensity);
+            autonomyMaterial.SetColor("_EmissionColor", colorFunction(colorFunctionTimer) * Mathf.Pow(2, hdrIntensity));
         }
     }
 }
