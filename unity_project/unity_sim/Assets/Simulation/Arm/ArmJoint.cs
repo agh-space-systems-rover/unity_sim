@@ -9,6 +9,12 @@ enum Axis
 
 public class ArmJoint : MonoBehaviour
 {
+    private const float SPRING_FORCE = 1000;
+    private const float GRIP_FORCE = 10;
+    private const float MAX_TARGET_RATE_OF_CHANGE = 60;
+    private const float COLLISION_THRESHOLD = 10;
+    private const float COLLISION_THRESHOLD_DURATION = 0.1f;
+
     [SerializeField]
     private float mass = 1.0f;
     [SerializeField]
@@ -25,6 +31,12 @@ public class ArmJoint : MonoBehaviour
     private bool initialized = false;
     private Rigidbody rb;
     private HingeJoint hj;
+    private Vector3 ogParentPosOffset = Vector3.zero;
+
+    private int envCollCount = 0;
+    private int grabCount = 0;
+    private float targetAngleSmooth = 0;
+    private float collisionTimer = 0;
 
     public void SetTargetAngle(float angle) {
         targetAngle = angle;
@@ -49,12 +61,6 @@ public class ArmJoint : MonoBehaviour
 
     }
 
-    private float targetAngleSmooth = 0.0f;
-    private const float MAX_TARGET_RATE_OF_CHANGE = 60.0f;
-    private const float COLLISION_THRESHOLD = 10.0f;
-    private float springDisabledTimer = 0.0f;
-    private const float SPRING_DISABLE_DURATION = 0.05f;
-
     private void Start()
     {
         if (initialized)
@@ -67,6 +73,7 @@ public class ArmJoint : MonoBehaviour
         rb = gameObject.AddComponent<Rigidbody>();
         rb.mass = mass;
         rb.solverIterations = 255;
+        rb.solverVelocityIterations = 255;
         // override center of mass to 0,0,0
         rb.centerOfMass = Vector3.zero;
 
@@ -74,13 +81,16 @@ public class ArmJoint : MonoBehaviour
         hj = gameObject.AddComponent<HingeJoint>();
         hj.axis = GetAxisVector();
         hj.useSpring = true;
-        JointSpring spring = hj.spring;
-        spring.spring = 1000000.0f;
-        spring.damper = 0;
-        hj.useAcceleration = true;
-        hj.spring = spring;
         hj.enableCollision = true;
         hj.anchor = Vector3.zero;
+        JointLimits limits = hj.limits;
+        limits.min = minAngle;
+        limits.bounciness = 0;
+        limits.bounceMinVelocity = 0;
+        limits.max = maxAngle;
+        hj.limits = limits;
+        hj.useLimits = true;
+        hj.extendedLimits = true;
 
         // Attach hinge joint to parent
         if (transform.parent)
@@ -101,17 +111,22 @@ public class ArmJoint : MonoBehaviour
             }
 
             parentRb.solverIterations = 255;
+            rb.solverVelocityIterations = 255;
 
             if (parentRb)
             {
                 hj.connectedBody = parentRb;
             }
+
+            ogParentPosOffset = transform.localPosition;
         }
+
+        Debug.Log("Joint " + name + " initialized. Is jaw: " + isThisJaw());
     }
 
     private void FixedUpdate()
     {
-        // Smoothly move smooth target towards raw target angle
+        // Move smooth target towards raw target angle
         float targetAngleDelta = targetAngle - targetAngleSmooth;
         targetAngleDelta = Mathf.Clamp(targetAngleDelta, -MAX_TARGET_RATE_OF_CHANGE * Time.fixedDeltaTime, MAX_TARGET_RATE_OF_CHANGE * Time.fixedDeltaTime);
         targetAngleSmooth += targetAngleDelta;
@@ -119,34 +134,133 @@ public class ArmJoint : MonoBehaviour
         // Update hinge target
         JointSpring spring = hj.spring;
         spring.targetPosition = NormalizeAngle(targetAngleSmooth);
+        spring.spring = isThisJaw() && grabCount > 0 ? GRIP_FORCE : SPRING_FORCE;
+        spring.damper = spring.spring * 0.01f;
         hj.spring = spring;
 
-        // // Check if joint is colliding
-        // float currAngle = hj.angle;
-        // if (float.IsNaN(currAngle))
-        // {
-        //     currAngle = 0;
-        // }
-        // if (Mathf.Abs(targetAngleSmooth - currAngle) > COLLISION_THRESHOLD)
-        // {
-        //     // Reset target angle to current angle
-        //     targetAngle = currAngle;
-        //     springDisabledTimer = SPRING_DISABLE_DURATION;
-        //     hj.useSpring = false;
-        //     Debug.Log("Joint " + name + " is colliding.");
-        // }
+        // Lock position for extra stability
+        if (!isJawGrabbing()) {
+            Matrix4x4 parentToWorld = transform.parent.localToWorldMatrix;
+            rb.MovePosition(parentToWorld.MultiplyPoint(ogParentPosOffset));
+        }
 
-        // // Re-enable spring after a short delay
-        // if (springDisabledTimer > 0.0f)
-        // {
-        //     springDisabledTimer -= Time.fixedDeltaTime;
-        //     if (springDisabledTimer <= 0.0f)
-        //     {
-        //         hj.useSpring = true;
-        //     }
-        // }
+        // Detect and mitigate collisions
+        // Get current angle
+        if (isChildCollidingWithEnvironment())
+        {
+            float currAngle = CurrentAngle();
+            // If target cannot be reached...
+            if (Mathf.Abs(Mathf.DeltaAngle(targetAngleSmooth, currAngle)) > COLLISION_THRESHOLD)
+            {
+                collisionTimer += Time.fixedDeltaTime;
+            } else {
+                collisionTimer = 0;
+            }
+            if (collisionTimer > COLLISION_THRESHOLD_DURATION)
+            {
+                Debug.Log("Joint " + name + " is colliding.");
+                targetAngle = LerpAngle(targetAngle, currAngle, 0.5f);
+                collisionTimer = 0;
+            }
+        }
+    }
 
-        // Debug.Log("Joint " + name + " target: " + targetAngleSmooth + " current: " + currAngle);
+    private void OnCollisionEnter(Collision collision)
+    {
+        // Count number of grabbed objects
+        if (isThisJaw()) {
+            Rigidbody otherRb = collision.gameObject.GetComponent<Rigidbody>();
+            ArmJoint otherJoint = collision.gameObject.GetComponent<ArmJoint>();
+            if (otherRb != null && otherJoint == null) {
+                grabCount++;
+                Debug.Log("Grabbed " + collision.gameObject.name + " (" + grabCount + ")");
+            }
+        }
+
+        // Count number of collisions with environment
+        {
+            ArmJoint otherJoint = collision.gameObject.GetComponent<ArmJoint>();
+            if (otherJoint == null)
+            {
+                envCollCount++;
+            }
+        }
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        // Count number of grabbed objects
+        if (isThisJaw()) {
+            Rigidbody otherRb = collision.gameObject.GetComponent<Rigidbody>();
+            ArmJoint otherJoint = collision.gameObject.GetComponent<ArmJoint>();
+            if (otherRb != null && otherJoint == null) {
+                Debug.Log("Released " + collision.gameObject.name + " (" + grabCount + ")");
+                grabCount--;
+            }
+        }
+
+        // Count number of collisions with environment
+        {
+            ArmJoint otherJoint = collision.gameObject.GetComponent<ArmJoint>();
+            if (otherJoint == null)
+            {
+                envCollCount--;
+            }
+        }
+    }
+
+    // UTILITIES
+
+    private float LerpAngle(float a, float b, float t)
+    {
+        float delta = Mathf.DeltaAngle(a, b);
+        return a + delta * t;
+    }
+
+    // private float ClosestNumber(float x, float[] options)
+    // {
+    //     float closest = options[0];
+    //     float distance = Mathf.Abs(x - closest);
+    //     for (int i = 1; i < options.Length; i++)
+    //     {
+    //         float newDistance = Mathf.Abs(x - options[i]);
+    //         if (newDistance < distance)
+    //         {
+    //             closest = options[i];
+    //             distance = newDistance;
+    //         }
+    //     }
+    //     return closest;
+    // }
+
+    // private Vector3 LockEulerAngles(Vector3 eulerAngles, Axis axis)
+    // {
+    //     switch (axis)
+    //     {
+    //         case Axis.X:
+    //             eulerAngles.y = ClosestNumber(eulerAngles.y, new float[] { 0, 180, 360 });
+    //             eulerAngles.z = ClosestNumber(eulerAngles.z, new float[] { 0, 180, 360 });
+    //             break;
+    //         case Axis.Y:
+    //             eulerAngles.x = ClosestNumber(eulerAngles.x, new float[] { 0, 180, 360 });
+    //             eulerAngles.z = ClosestNumber(eulerAngles.z, new float[] { 0, 180, 360 });
+    //             break;
+    //         case Axis.Z:
+    //             eulerAngles.x = ClosestNumber(eulerAngles.x, new float[] { 0, 180, 360 });
+    //             eulerAngles.y = ClosestNumber(eulerAngles.y, new float[] { 0, 180, 360 });
+    //             break;
+    //     }
+    //     return eulerAngles;
+    // }
+
+    private float CurrentAngle()
+    {
+        float angle;
+        Vector3 axis;
+        transform.localRotation.ToAngleAxis(out angle, out axis);
+        Vector3 rotationAxis = GetAxisVector();
+        float signedAngle = angle * Vector3.Dot(rotationAxis, axis);
+        return NormalizeAngle(signedAngle);
     }
 
     private Rigidbody getYoungestAncestorRb() {
@@ -188,5 +302,64 @@ public class ArmJoint : MonoBehaviour
             axisVector *= -1;
         }
         return axisVector;
+    }
+
+    private bool isThisJaw()
+    {
+        foreach (Transform child in transform)
+        {
+            if (child.GetComponent<ArmJoint>())
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private ArmJoint findJaw()
+    {
+        ArmJoint candidate = this;
+        while (!candidate.isThisJaw())
+        {
+            foreach (Transform child in candidate.transform)
+            {
+                ArmJoint childJoint = child.GetComponent<ArmJoint>();
+                if (childJoint)
+                {
+                    candidate = childJoint;
+                    break;
+                }
+            }
+        }
+        return candidate;
+    }
+
+    private bool isJawGrabbing() {
+        return findJaw().grabCount > 0;
+    }
+
+    private bool isChildCollidingWithEnvironment() {
+        Transform tf = transform;
+        while (tf)
+        {
+            ArmJoint childJoint = null;
+            foreach (Transform child in tf)
+            {
+                childJoint = child.GetComponent<ArmJoint>();
+                if (childJoint) {
+                    break;
+                }
+            }
+            if (childJoint) {
+                if (childJoint.envCollCount > 0) {
+                    return true;
+                } else {
+                    tf = childJoint.transform;
+                }
+            } else {
+                tf = null;
+            }
+        }
+        return false;
     }
 }
