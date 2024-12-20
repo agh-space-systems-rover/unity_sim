@@ -51,7 +51,7 @@ public class RealSense : MonoBehaviour
     private async void Start()
     {
         RenderTexture rt = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32);
-        rt.depthStencilFormat = GraphicsFormat.D24_UNorm_S8_UInt;
+        rt.depthStencilFormat = GraphicsFormat.S8_UInt;
 
         // camera settings
         cam = GetComponent<Camera>();
