@@ -193,12 +193,12 @@ PrefabInstance:
     - target: {fileID: -2824814025772163464, guid: aeee5ca79765f63b18c86b3e26d9bbed,
         type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.9238795
+      value: 0.9063078
       objectReference: {fileID: 0}
     - target: {fileID: -2824814025772163464, guid: aeee5ca79765f63b18c86b3e26d9bbed,
         type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.38268346
+      value: 0.4226183
       objectReference: {fileID: 0}
     - target: {fileID: -2824814025772163464, guid: aeee5ca79765f63b18c86b3e26d9bbed,
         type: 3}
@@ -332,10 +332,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8566542603563507413, guid: aeee5ca79765f63b18c86b3e26d9bbed,
         type: 3}
       insertIndex: -1
-      addedObject: {fileID: 409363490522854080}
-    - targetCorrespondingSourceObject: {fileID: -8566542603563507413, guid: aeee5ca79765f63b18c86b3e26d9bbed,
-        type: 3}
-      insertIndex: -1
       addedObject: {fileID: 1846814288543598893}
     - targetCorrespondingSourceObject: {fileID: -8566542603563507413, guid: aeee5ca79765f63b18c86b3e26d9bbed,
         type: 3}
@@ -344,7 +340,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8566542603563507413, guid: aeee5ca79765f63b18c86b3e26d9bbed,
         type: 3}
       insertIndex: -1
+      addedObject: {fileID: 409363490522854080}
+    - targetCorrespondingSourceObject: {fileID: -8566542603563507413, guid: aeee5ca79765f63b18c86b3e26d9bbed,
+        type: 3}
+      insertIndex: -1
       addedObject: {fileID: 7895019471577910649}
+    - targetCorrespondingSourceObject: {fileID: -8566542603563507413, guid: aeee5ca79765f63b18c86b3e26d9bbed,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2010971955082093470}
     - targetCorrespondingSourceObject: {fileID: -2465031928462035920, guid: aeee5ca79765f63b18c86b3e26d9bbed,
         type: 3}
       insertIndex: -1
@@ -414,7 +418,6 @@ MonoBehaviour:
   targetAngle: 100
   minAngle: -165
   maxAngle: 165
-  grip: 0
 --- !u!136 &1296690799003855270
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -485,7 +488,6 @@ MonoBehaviour:
   targetAngle: 60
   minAngle: -180
   maxAngle: 180
-  grip: 0
 --- !u!65 &1016199948665798185
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -531,7 +533,6 @@ MonoBehaviour:
   targetAngle: -60
   minAngle: -95
   maxAngle: 0
-  grip: 1
 --- !u!65 &6380194734076066552
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -619,7 +620,6 @@ MonoBehaviour:
   targetAngle: 0
   minAngle: -360
   maxAngle: 360
-  grip: 0
 --- !u!65 &503668078344287568
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -770,28 +770,6 @@ MonoBehaviour:
   targetAngle: 0
   minAngle: -360
   maxAngle: 360
-  grip: 0
---- !u!65 &409363490522854080
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2651989016096659668}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.16, y: 0.08102098, z: 0.07213888}
-  m_Center: {x: 0, y: 0.0000050926583, z: 0.3944147}
 --- !u!65 &1846814288543598893
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -832,8 +810,29 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.111195, y: 0.0556897, z: 0.08326361}
-  m_Center: {x: -0.00001752872, y: -0.0000050083363, z: 0.3120558}
+  m_Size: {x: 0.071660355, y: 0.0556897, z: 0.08326361}
+  m_Center: {x: 0.0011892766, y: -0.000005024988, z: 0.3120558}
+--- !u!65 &409363490522854080
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2651989016096659668}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.032547683, y: 0.061926708, z: 0.1294851}
+  m_Center: {x: -0.06372616, y: 0.000056970977, z: 0.359271}
 --- !u!136 &7895019471577910649
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -857,6 +856,27 @@ CapsuleCollider:
   m_Height: 0.1763618
   m_Direction: 0
   m_Center: {x: 0.000017426908, y: -0.000010438263, z: 0.4241386}
+--- !u!65 &2010971955082093470
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2651989016096659668}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.0349223, y: 0.065325856, z: 0.13233122}
+  m_Center: {x: 0.06219814, y: 0.0000807137, z: 0.35784853}
 --- !u!4 &3052031434409139732 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: aeee5ca79765f63b18c86b3e26d9bbed,
@@ -887,7 +907,6 @@ MonoBehaviour:
   targetAngle: 0
   minAngle: -360
   maxAngle: 360
-  grip: 0
 --- !u!136 &6089418407441296043
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -955,7 +974,6 @@ MonoBehaviour:
   mass: 1
   axis: 0
   reverseAngle: 0
-  targetAngle: 45
+  targetAngle: 50
   minAngle: -115
   maxAngle: 115
-  grip: 0
