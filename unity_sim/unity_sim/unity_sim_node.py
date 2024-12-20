@@ -44,18 +44,28 @@ class UnitySim(rclpy.node.Node):
                     "-S",
                     native_plugin_dir,
                     "-DCMAKE_BUILD_TYPE=Release",
-                ]
+                ],
+                capture_output=True,
+                text=True,
             )
             if proc.returncode != 0:
+                self.get_logger().error(
+                    f"Failed to configure CMake for unity_rs_publisher_plugin.\n\n===STDOUT===\n{proc.stdout}\n===STDERR===\n{proc.stderr}\n===EXIT CODE===\n{proc.returncode}\n"
+                )
                 raise RuntimeError(
                     "Failed to configure CMake for unity_rs_publisher_plugin."
                 )
 
             proc = subprocess.run(
                 cmd_prefix
-                + ["cmake", "--build", native_plugin_build_dir, "--config Release"]
+                + ["cmake", "--build", native_plugin_build_dir, "--config Release"],
+                capture_output=True,
+                text=True,
             )
             if proc.returncode != 0:
+                self.get_logger().error(
+                    f"Failed to build unity_rs_publisher_plugin.\n\n===STDOUT===\n{proc.stdout}\n===STDERR===\n{proc.stderr}\n===EXIT CODE===\n{proc.returncode}\n"
+                )
                 raise RuntimeError("Failed to build unity_rs_publisher_plugin.")
 
             shutil.copy(
