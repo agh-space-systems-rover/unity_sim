@@ -645,6 +645,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: CommonObjects
       objectReference: {fileID: 0}
+    - target: {fileID: 7571397839147848218, guid: 771f647cb5a100edeaa9592ddcc33071,
+        type: 3}
+      propertyPath: magOffset
+      value: -1.213425
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

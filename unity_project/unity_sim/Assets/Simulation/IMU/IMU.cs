@@ -12,7 +12,7 @@ public class IMU : MonoBehaviour
     [SerializeField]
     private float frequency = 60;
     [SerializeField]
-    private float yawOffset = 0; // rad
+    private float magOffset = 0; // rad
     [SerializeField]
     private float gravity = 9.81f;
 
@@ -99,7 +99,7 @@ public class IMU : MonoBehaviour
         Matrix4x4 unityToRos = rosToUnity.inverse;
 
         // Transform absolute orientation to ROS coordinate system.
-        Matrix4x4 unityToOffsetUnity = Matrix4x4.Rotate(Quaternion.AngleAxis(Mathf.Rad2Deg * yawOffset, Vector3.up));
+        Matrix4x4 unityToOffsetUnity = Matrix4x4.Rotate(Quaternion.AngleAxis(Mathf.Rad2Deg * magOffset, Vector3.up));
         Matrix4x4 angPosMat = Matrix4x4.Rotate(angPos);
         angPosMat = unityToRos * unityToOffsetUnity * angPosMat * rosToUnity;
         angPos = angPosMat.rotation;
