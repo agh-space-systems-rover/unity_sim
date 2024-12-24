@@ -993,7 +993,7 @@ PrefabInstance:
     - target: {fileID: 4670030488963387507, guid: 771f647cb5a100edeaa9592ddcc33071,
         type: 3}
       propertyPath: m_Name
-      value: KalmanWithCamera
+      value: CommonObjects
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1401,6 +1401,7 @@ PrefabInstance:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 1014972656}
   - {fileID: 200238856}
   - {fileID: 269640811}
   - {fileID: 1982324255}
@@ -1415,4 +1416,3 @@ SceneRoots:
   - {fileID: 315050970}
   - {fileID: 344788642}
   - {fileID: 1057573667}
-  - {fileID: 1014972656}
