@@ -12,6 +12,8 @@ public class IMU : MonoBehaviour
     [SerializeField]
     private float frequency = 60;
     [SerializeField]
+    private bool useMag = true;
+    [SerializeField]
     private float magOffset = 0; // rad
     [SerializeField]
     private float gravity = 9.81f;
@@ -25,6 +27,7 @@ public class IMU : MonoBehaviour
     private Publisher<ROSBridge.SensorMsgs.Imu> imuPublisher = null;
     private double lastPublishTime = 0.0;
     private double[] covariance = new double[9] { 1e-3, 0, 0, 0, 1e-3, 0, 0, 0, 1e-3 };
+    private float noMagYawError = 0.0f;
 
     private async void Start()
     {
@@ -65,6 +68,15 @@ public class IMU : MonoBehaviour
         Quaternion angVel = Quaternion.SlerpUnclamped(Quaternion.identity, deltaAngPos, 1 / Time.fixedDeltaTime);
         prevAngPos = angPos;
         prevAngVel = angVel;
+
+        // update noMagYawError
+        if (!useMag)
+        {
+            float angSpeed = Quaternion.Angle(Quaternion.identity, angVel) * Mathf.Deg2Rad;
+            noMagYawError += angSpeed * Time.fixedDeltaTime * Random.Range(-0.05f, 0.3f);
+        } else {
+            noMagYawError = 0.0f;
+        }
     }
 
     private async void Update()
@@ -99,7 +111,7 @@ public class IMU : MonoBehaviour
         Matrix4x4 unityToRos = rosToUnity.inverse;
 
         // Transform absolute orientation to ROS coordinate system.
-        Matrix4x4 unityToOffsetUnity = Matrix4x4.Rotate(Quaternion.AngleAxis(Mathf.Rad2Deg * magOffset, Vector3.up));
+        Matrix4x4 unityToOffsetUnity = Matrix4x4.Rotate(Quaternion.AngleAxis(Mathf.Rad2Deg * (magOffset + noMagYawError), Vector3.up));
         Matrix4x4 angPosMat = Matrix4x4.Rotate(angPos);
         angPosMat = unityToRos * unityToOffsetUnity * angPosMat * rosToUnity;
         angPos = angPosMat.rotation;
