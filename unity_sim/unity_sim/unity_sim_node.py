@@ -89,7 +89,11 @@ class UnitySim(rclpy.node.Node):
 
         # Prepare a command to run and kill Unity.
         run_cmd = [os.path.join(unity_dir, "Editor/Unity"), "-openfile", scene_path]
-        self.kill_cmd = ["pkill", "-9", "-f", '"' + " ".join(run_cmd) + '"']
+        # self.kill_cmd = ["pkill", "-9", "-f", '"' + " ".join(run_cmd) + '"']
+        self.kill_cmd = ["pkill", "-9", "-f", "unity_sim/unity_project"]
+
+        # Kill Unity before attempting to run it.
+        print(" ".join(self.kill_cmd))
 
         # Run Unity in background.
         if self.running_in_distrobox:
