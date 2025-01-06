@@ -778,7 +778,7 @@ MonoBehaviour:
   m_ActionEvents: []
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
-  m_DefaultActionMap: FollowCamera
+  m_DefaultActionMap: 1c9c7f05-c88a-4313-bdda-1cdbec679be4
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
 --- !u!1 &2651989016096659668 stripped
