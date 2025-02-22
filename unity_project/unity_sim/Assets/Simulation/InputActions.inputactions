@@ -1,5 +1,5 @@
 {
-    "name": "New Controls",
+    "name": "InputActions",
     "maps": [
         {
             "name": "Kalman",
@@ -177,28 +177,6 @@
                 },
                 {
                     "name": "",
-                    "id": "4a55e048-6ab3-42b4-8d0a-64295775f3cc",
-                    "path": "<Gamepad>/leftTrigger",
-                    "interactions": "",
-                    "processors": "Invert",
-                    "groups": "",
-                    "action": "Jaw",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "b28f9220-46a9-40b8-ade3-9f6ba8eeffe7",
-                    "path": "<Gamepad>/rightTrigger",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Jaw",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "64f02be1-6a81-422b-8e50-8f71cce73ec0",
                     "path": "<Gamepad>/dpad/y",
                     "interactions": "",
@@ -210,8 +188,19 @@
                 },
                 {
                     "name": "",
-                    "id": "0cfa5882-9a2b-480e-84ee-180c7a1ba3ef",
-                    "path": "<Gamepad>/dpad/x",
+                    "id": "e8051cd6-9a44-434c-a781-e66fb23f280d",
+                    "path": "<Gamepad>/rightStick/x",
+                    "interactions": "",
+                    "processors": "Invert",
+                    "groups": "",
+                    "action": "Joint4",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "57dd73e9-2701-4e9b-a781-18c0ae22e906",
+                    "path": "<Gamepad>/leftTrigger",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -221,12 +210,34 @@
                 },
                 {
                     "name": "",
-                    "id": "e8051cd6-9a44-434c-a781-e66fb23f280d",
-                    "path": "<Gamepad>/rightStick/x",
+                    "id": "0cd16ed0-7740-4134-b517-bef5591ad477",
+                    "path": "<Gamepad>/rightTrigger",
+                    "interactions": "",
+                    "processors": "Invert",
+                    "groups": "",
+                    "action": "Joint6",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d9eda88b-bf36-47c9-a512-2f28a62804b7",
+                    "path": "<Gamepad>/buttonSouth",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Joint4",
+                    "action": "Jaw",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "4ea30a58-197d-4991-9e46-93648ddfac0c",
+                    "path": "<Gamepad>/buttonNorth",
+                    "interactions": "",
+                    "processors": "Invert",
+                    "groups": "",
+                    "action": "Jaw",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
