@@ -27,7 +27,7 @@ namespace ROSBridge
 
         public async Task Publish(T msg, bool largeData = false)
         {
-            await ros.Send(new
+            await ROS.Send(new
             {
                 op = "publish",
                 topic = topic,

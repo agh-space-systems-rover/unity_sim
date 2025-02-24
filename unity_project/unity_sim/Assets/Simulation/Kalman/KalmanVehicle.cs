@@ -115,7 +115,7 @@ public class KalmanVehicle : MonoBehaviour
         }
     }
 
-    private async void Start()
+    private void Start()
     {
         // Override center of mass for better handling.
         GetComponent<Rigidbody>().centerOfMass = new Vector3(0, 0.25F, -0.1F);
@@ -153,22 +153,22 @@ public class KalmanVehicle : MonoBehaviour
         flTorquePid = frTorquePid = blTorquePid = brTorquePid = new PID(1, 0, 0);
 
         // Subscribe to /wheel_states topic.
-        await ros.CreateSubscription<WheelStates>(wheelStatesTopic, (msg) =>
+        ros.CreateSubscription<WheelStates>(wheelStatesTopic, (msg) =>
         {
             // Debug.Log("Received wheel states.");
             wheelStates = msg;
         });
 
         // Publish return frames and wheel temperatures.
-        returnPublisher = await ros.CreatePublisher<WheelStates>(wheelStatesReturnTopic);
-        wheelTempPublisher = await ros.CreatePublisher<WheelTemperatures>(wheelTempsTopic);
+        returnPublisher = ros.CreatePublisher<WheelStates>(wheelStatesReturnTopic);
+        wheelTempPublisher = ros.CreatePublisher<WheelTemperatures>(wheelTempsTopic);
     }
 
-    private async void OnApplicationQuit()
+    private void OnApplicationQuit()
     {
         if (ros != null)
         {
-            await ros.Close();
+            ros.Close();
         }
     }
 

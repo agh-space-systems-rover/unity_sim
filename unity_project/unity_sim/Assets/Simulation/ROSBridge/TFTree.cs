@@ -16,7 +16,7 @@ namespace ROSBridge
             tfTopic = topicPrefix + tfTopic;
 
             // Subscribe to tf_static.
-            _ = ros.CreateSubscription<ROSBridge.TF2Msgs.TFMessage>(tfStaticTopic, (msg) =>
+            ros.CreateSubscription<ROSBridge.TF2Msgs.TFMessage>(tfStaticTopic, (msg) =>
             {
                 // TODO: Sometimes this message is not received.
                 // For each transform.
@@ -28,7 +28,7 @@ namespace ROSBridge
             });
 
             // Subscribe to tf.
-            _ = ros.CreateSubscription<ROSBridge.TF2Msgs.TFMessage>(tfTopic, (msg) =>
+            ros.CreateSubscription<ROSBridge.TF2Msgs.TFMessage>(tfTopic, (msg) =>
             {
                 // For each transform.
                 foreach (ROSBridge.GeometryMsgs.TransformStamped transform in msg.Transforms)

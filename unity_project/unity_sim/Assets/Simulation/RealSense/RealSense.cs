@@ -103,7 +103,7 @@ public class RealSense : MonoBehaviour
 
         // ROS
         var ros = new ROS();
-        var unityRsPublisherMetaPub = await ros.CreatePublisher<ROSBridge.UnityRSPublisherMsgs.CameraMetadata>("/" + id + "/unity_rs_publisher/meta");
+        var unityRsPublisherMetaPub = ros.CreatePublisher<ROSBridge.UnityRSPublisherMsgs.CameraMetadata>("/" + id + "/unity_rs_publisher/meta");
         OpenBridgeConnection(id, width, height, vFov, depthMin, depthMax);
 
         // Use a custom update loop to guarantee resource destruction.
@@ -168,7 +168,7 @@ public class RealSense : MonoBehaviour
                     }
 
                     // Publish depth min and depth max for unity_rs_publisher.
-                    await unityRsPublisherMetaPub.Publish(new ROSBridge.UnityRSPublisherMsgs.CameraMetadata
+                    _ = unityRsPublisherMetaPub.Publish(new ROSBridge.UnityRSPublisherMsgs.CameraMetadata
                     {
                         Width = width,
                         Height = height,
@@ -188,7 +188,7 @@ public class RealSense : MonoBehaviour
         finally
         {
             if (buffer.IsCreated) buffer.Dispose();
-            await ros.Close();
+            ros.Close();
             CloseBridgeConnection(id);
         }
     }

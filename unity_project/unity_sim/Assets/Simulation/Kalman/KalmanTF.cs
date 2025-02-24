@@ -29,7 +29,7 @@ public class KalmanTF : MonoBehaviour
     [SerializeField]
     private float frequency = 1;
 
-    private ROS ros;
+    private ROS ros = null;
     private TFTree tf;
     private float lastUpdateTime = 0;
 
@@ -40,6 +40,14 @@ public class KalmanTF : MonoBehaviour
 
         // Initialize TF tree.
         tf = new TFTree(ros, tfTopicPrefix);
+    }
+
+    private void OnApplicationQuit()
+    {
+        if (ros != null)
+        {
+            ros.Close();
+        }
     }
 
     private void Update()

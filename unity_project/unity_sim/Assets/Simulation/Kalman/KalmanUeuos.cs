@@ -45,7 +45,7 @@ public class KalmanUeuos : MonoBehaviour
     private Func<float, Color> colorFunction;
     private float colorFunctionTimer;
 
-    private async void Start()
+    private void Start()
     {
         // Get the autonomy material and clone it.
         var renderer = GetComponent<Renderer>();
@@ -66,16 +66,16 @@ public class KalmanUeuos : MonoBehaviour
         ros = new ROS();
 
         // Create services.
-        await ros.CreateService<SetUeuosColor, SetUeuosColor.Request, SetUeuosColor.Response>(setColorService, SetColor);
-        await ros.CreateService<SetUeuosState, SetUeuosState.Request, SetUeuosState.Response>(setStateService, SetState);
-        await ros.CreateService<SetUeuosEffect, SetUeuosEffect.Request, SetUeuosEffect.Response>(setEffectService, SetEffect);
+        ros.CreateService<SetUeuosColor, SetUeuosColor.Request, SetUeuosColor.Response>(setColorService, SetColor);
+        ros.CreateService<SetUeuosState, SetUeuosState.Request, SetUeuosState.Response>(setStateService, SetState);
+        ros.CreateService<SetUeuosEffect, SetUeuosEffect.Request, SetUeuosEffect.Response>(setEffectService, SetEffect);
     }
 
-    private async void OnApplicationQuit()
+    private void OnApplicationQuit()
     {
         if (ros != null)
         {
-            await ros.Close();
+            ros.Close();
         }
     }
 

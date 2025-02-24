@@ -12,19 +12,29 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 
-find_package(unity_rs_publisher_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
 find_package(image_transport REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 
-add_executable(unity_rs_publisher src/main.cpp)
-ament_target_dependencies(unity_rs_publisher unity_rs_publisher_msgs rclcpp image_transport cv_bridge std_msgs sensor_msgs)
+find_package(unity_rs_publisher_msgs REQUIRED)
 
-install(TARGETS
-  unity_rs_publisher
-  DESTINATION lib/${PROJECT_NAME}
+add_library(unity_rs_publisher_node SHARED src/unity_rs_publisher_node.cpp)
+ament_target_dependencies(unity_rs_publisher_node rclcpp rclcpp_components image_transport cv_bridge std_msgs sensor_msgs unity_rs_publisher_msgs)
+rclcpp_components_register_node(
+  unity_rs_publisher_node
+  PLUGIN "unity_rs_publisher::UnityRsPublisher"
+  EXECUTABLE unity_rs_publisher
+)
+
+ament_export_targets(unity_rs_publisher-targets)
+install(TARGETS unity_rs_publisher_node
+  EXPORT unity_rs_publisher-targets
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
 )
 
 if(BUILD_TESTING)

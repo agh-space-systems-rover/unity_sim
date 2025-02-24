@@ -22,21 +22,21 @@ public class Altimeter : MonoBehaviour
     private double lastPublishTime = 0.0;
     private double variance = 0.1;
 
-    private async void Start()
+    private void Start()
     {
         height = transform.position.y;
 
         ros = new ROS();
-        publisher = await ros.CreatePublisher<ROSBridge.GeometryMsgs.PoseWithCovarianceStamped>(topic);
+        publisher = ros.CreatePublisher<ROSBridge.GeometryMsgs.PoseWithCovarianceStamped>(topic);
 
         FixedUpdate();
     }
 
-    private async void OnApplicationQuit()
+    private void OnApplicationQuit()
     {
         if (ros != null)
         {
-            await ros.Close();
+            ros.Close();
         }
     }
 

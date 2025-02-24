@@ -29,23 +29,23 @@ public class IMU : MonoBehaviour
     private double[] covariance = new double[9] { 1e-3, 0, 0, 0, 1e-3, 0, 0, 0, 1e-3 };
     private float noMagYawError = 0.0f;
 
-    private async void Start()
+    private void Start()
     {
         prevPos = transform.position;
         prevVel = Vector3.zero;
         prevAngPos = Quaternion.identity;
 
         ros = new ROS();
-        imuPublisher = await ros.CreatePublisher<ROSBridge.SensorMsgs.Imu>(topic);
+        imuPublisher = ros.CreatePublisher<ROSBridge.SensorMsgs.Imu>(topic);
 
         FixedUpdate();
     }
 
-    private async void OnApplicationQuit()
+    private void OnApplicationQuit()
     {
         if (ros != null)
         {
-            await ros.Close();
+            ros.Close();
         }
     }
 

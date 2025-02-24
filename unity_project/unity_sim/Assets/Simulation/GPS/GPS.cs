@@ -49,19 +49,19 @@ public class GPS : MonoBehaviour
     private Vector3 currentDrift = Vector3.zero;
     private double lastDriftUpdateTime = 0.0;
 
-    private async void Start()
+    private void Start()
     {
         ros = new ROS();
-        publisher = await ros.CreatePublisher<ROSBridge.SensorMsgs.NavSatFix>(topic);
+        publisher = ros.CreatePublisher<ROSBridge.SensorMsgs.NavSatFix>(topic);
 
         ScanBaseStations();
     }
 
-    private async void OnApplicationQuit()
+    private void OnApplicationQuit()
     {
         if (ros != null)
         {
-            await ros.Close();
+            ros.Close();
         }
     }
 
