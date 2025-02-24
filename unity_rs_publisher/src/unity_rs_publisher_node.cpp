@@ -29,7 +29,7 @@
 namespace unity_rs_publisher {
 
 class UnityRsPublisher : public rclcpp::Node {
-  public:
+public:
 	// ROS
 	image_transport::ImageTransport it;
 
@@ -301,6 +301,14 @@ class UnityRsPublisher : public rclcpp::Node {
 				// origin.
 				cv::flip(color_mat, color_mat, 0);
 				cv::flip(depth_mat, depth_mat, 0);
+
+				// Fake artifacts in the depth image.
+				for (int _ = 0; _ < 100; _++) {
+					int artifact_size = rand() % 20 + 1;
+					int x = rand() % (depth_mat.cols - artifact_size);
+					int y = rand() % (depth_mat.rows - artifact_size);
+					depth_mat(cv::Rect(x, y, artifact_size, artifact_size)) = 0;
+				}
 
 				// Initialize the rest of color and depth messages.
 				color.header.frame_id = client_id + "_color_optical_frame";
