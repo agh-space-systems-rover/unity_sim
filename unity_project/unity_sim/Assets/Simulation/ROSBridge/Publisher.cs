@@ -27,6 +27,14 @@ namespace ROSBridge
 
         public async Task Publish(T msg, bool largeData = false)
         {
+            // internal readonly List<AdvertisementStatus> activePublishers = new List<AdvertisementStatus>();
+            // Abort if publisher is not yet advertised
+            var i = ros.activePublishers.FindIndex(x => x.name == topic);
+            if (i == -1 || !ros.activePublishers[i].advertised)
+            {
+                return;
+            }
+
             await ROS.Send(new
             {
                 op = "publish",
