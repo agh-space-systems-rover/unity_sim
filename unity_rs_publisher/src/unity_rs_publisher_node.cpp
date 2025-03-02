@@ -153,9 +153,9 @@ public:
 	) {
 		// Create publishers for this client.
 		rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr
-		    aligned_depth_to_color_info_pub,
+		    depth_info_pub,
 		    color_info_pub;
-		image_transport::Publisher aligned_depth_to_color_pub, color_pub;
+		image_transport::Publisher depth_pub, color_pub;
 		rclcpp::Subscription<
 		    unity_rs_publisher_msgs::msg::CameraMetadata>::SharedPtr meta_sub;
 		std::optional<unity_rs_publisher_msgs::msg::CameraMetadata>  meta;
@@ -170,13 +170,10 @@ public:
 			);
 
 			// Create a publishers for this client.
-			aligned_depth_to_color_info_pub =
-			    create_publisher<sensor_msgs::msg::CameraInfo>(
-			        client_id + "/aligned_depth_to_color/camera_info", 1
-			    );
-			aligned_depth_to_color_pub = it.advertise(
-			    client_id + "/aligned_depth_to_color/image_raw", 1
+			depth_info_pub = create_publisher<sensor_msgs::msg::CameraInfo>(
+			    client_id + "/depth/camera_info", 1
 			);
+			depth_pub      = it.advertise(client_id + "/depth/image_raw", 1);
 			color_info_pub = create_publisher<sensor_msgs::msg::CameraInfo>(
 			    client_id + "/color/camera_info", 1
 			);
@@ -366,8 +363,8 @@ public:
 					depth.header.stamp       = stamp;
 					camera_info.header.stamp = stamp;
 
-					aligned_depth_to_color_info_pub->publish(camera_info);
-					aligned_depth_to_color_pub.publish(depth);
+					depth_info_pub->publish(camera_info);
+					depth_pub.publish(depth);
 					color_info_pub->publish(camera_info);
 					color_pub.publish(color);
 				}
