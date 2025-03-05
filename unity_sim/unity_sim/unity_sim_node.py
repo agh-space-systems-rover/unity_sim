@@ -87,23 +87,25 @@ class UnitySim(rclpy.node.Node):
             f"{project_dir}/unity_sim/Assets/Simulation/Scenes/{scene}.unity"
         )
 
-        # Prepare a command to run and kill Unity.
-        run_cmd = [os.path.join(unity_dir, "Editor/Unity"), "-openfile", scene_path]
-        # self.kill_cmd = ["pkill", "-9", "-f", '"' + " ".join(run_cmd) + '"']
-        self.kill_cmd = ["pkill", "-9", "-f", "unity_sim/unity_project"]
-
-        # Kill Unity before attempting to run it.
-        print(" ".join(self.kill_cmd))
+        # Prepare commands to run and kill Unity.
+        run_cmd_unity = (
+            os.path.join(unity_dir, "Editor/Unity") + " -openfile " + scene_path
+        )
+        run_cmd_unityhub = f"unityhub > /dev/null 2>&1 &"
+        if self.running_in_distrobox:
+            run_cmd_unity = "distrobox-host-exec " + run_cmd_unity
+            run_cmd_unityhub = "distrobox-host-exec " + run_cmd_unityhub
+        self.kill_cmd = "pkill -9 -f unity_sim/unity_project 2>&1 > /dev/null"
 
         # Run Unity in background.
-        if self.running_in_distrobox:
-            run_cmd = ["distrobox-host-exec"] + run_cmd
-        self.get_logger().info(f"Running Unity with command: {' '.join(run_cmd)}")
+        self.get_logger().info(f"Running Unity with command: {run_cmd_unity}")
         self.process = subprocess.Popen(
-            run_cmd,
+            run_cmd_unity.split(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
+        # Also start Unity Hub so that Unity does not try to do it itself.
+        os.system(run_cmd_unityhub)
 
         self.terminating = False
         self.timer = self.create_timer(0.1, self.timer_callback)
@@ -114,11 +116,10 @@ class UnitySim(rclpy.node.Node):
 
     def timer_callback(self):
         if self.terminating:
-            self.kill_cmd += ["2>&1", ">", "/dev/null"]
             if self.running_in_distrobox:
-                self.kill_cmd = ["distrobox-host-exec"] + self.kill_cmd
-            self.get_logger().info("Shutting down Unity:\n" + " ".join(self.kill_cmd))
-            os.system(" ".join(self.kill_cmd))
+                self.kill_cmd = "distrobox-host-exec " + self.kill_cmd
+            self.get_logger().info("Shutting down Unity:\n" + self.kill_cmd)
+            os.system(self.kill_cmd)
             raise KeyboardInterrupt
         elif self.process.poll() is not None:
             self.get_logger().info("Unity has exited.")
