@@ -18,7 +18,7 @@ def launch_setup(context):
 
     description = []
 
-    if selective_launch != "only_ros":
+    if selective_launch != "only_rs_pub":
         description += [
             Node(
                 package="unity_sim",
@@ -27,10 +27,6 @@ def launch_setup(context):
                     {"scene": scene},
                 ],
             ),
-        ]
-
-    if selective_launch != "only_sim":
-        description += [
             # rosbridge server for C# <-> ROS communication
             Node(package="rosbridge_server", executable="rosbridge_websocket"),
             # tf_static republisher
@@ -42,6 +38,7 @@ def launch_setup(context):
             ),
         ]
 
+    if selective_launch != "no_rs_pub":
         # custom Unix Socket server for camera image transfer
         if component_container:
             description.append(
@@ -80,8 +77,8 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "selective_launch",
                 default_value="all",
-                choices=["all", "only_sim", "only_ros"],
-                description="Selectively launch just Unity or just the ROS nodes.",
+                choices=["all", "no_rs_pub", "only_rs_pub"],
+                description="Selectively launch Unity and/or camera publisher.",
             ),
             OpaqueFunction(function=launch_setup),
         ]
