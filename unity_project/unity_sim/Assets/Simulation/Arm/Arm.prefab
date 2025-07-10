@@ -297,6 +297,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 4502943277818780555}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: aeee5ca79765f63b18c86b3e26d9bbed,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9107121426241098912}
     - targetCorrespondingSourceObject: {fileID: 7727184524504467163, guid: aeee5ca79765f63b18c86b3e26d9bbed,
         type: 3}
       insertIndex: -1
@@ -533,10 +537,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mass: 0.1
   axis: 0
-  reverseAngle: 0
-  targetAngle: -60
-  minAngle: -95
-  maxAngle: 0
+  reverseAngle: 1
+  targetAngle: 60
+  minAngle: 0
+  maxAngle: 95
 --- !u!65 &6380194734076066552
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -620,7 +624,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mass: 0.5
   axis: 2
-  reverseAngle: 0
+  reverseAngle: 1
   targetAngle: 0
   minAngle: -360
   maxAngle: 360
@@ -778,9 +782,25 @@ MonoBehaviour:
   m_ActionEvents: []
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
-  m_DefaultActionMap: 1c9c7f05-c88a-4313-bdda-1cdbec679be4
+  m_DefaultActionMap: ArmGamepad
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
+--- !u!114 &9107121426241098912
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2382737113477547182}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 457aaa3efe5ec6c05bef81833671d0a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tgtVelTopic: /arm/joints/target_vel
+  curPosTopic: /arm/joints/current_pos
+  controlTimeout: 0.1
+  feedbackRate: 30
 --- !u!1 &2651989016096659668 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -8566542603563507413, guid: aeee5ca79765f63b18c86b3e26d9bbed,
@@ -801,7 +821,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mass: 2
   axis: 2
-  reverseAngle: 0
+  reverseAngle: 1
   targetAngle: 0
   minAngle: -360
   maxAngle: 360

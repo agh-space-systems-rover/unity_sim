@@ -12,7 +12,7 @@ public class ArmJoint : MonoBehaviour
 {
     private const float SPRING_FORCE = 1000;
     private const float GRIP_FORCE = 10;
-    private const float MAX_TARGET_RATE_OF_CHANGE = 60;
+    private const float MAX_TARGET_RATE_OF_CHANGE = 60; // deg/s
     private const float COLLISION_THRESHOLD = 10;
     private const float COLLISION_THRESHOLD_DURATION = 0.1f;
 
@@ -250,7 +250,7 @@ public class ArmJoint : MonoBehaviour
     //     return eulerAngles;
     // }
 
-    private float CurrentAngle()
+    public float CurrentAngle()
     {
         float angle;
         Vector3 axis;
