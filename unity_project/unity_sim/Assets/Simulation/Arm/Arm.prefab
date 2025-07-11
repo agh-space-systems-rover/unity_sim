@@ -799,8 +799,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tgtVelTopic: /arm/joints/target_vel
   curPosTopic: /arm/joints/current_pos
-  controlTimeout: 0.1
-  feedbackRate: 30
+  controlTimeout: 0.5
+  feedbackRate: 60
 --- !u!1 &2651989016096659668 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -8566542603563507413, guid: aeee5ca79765f63b18c86b3e26d9bbed,

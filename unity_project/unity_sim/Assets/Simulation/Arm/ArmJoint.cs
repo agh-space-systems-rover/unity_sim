@@ -44,7 +44,12 @@ public class ArmJoint : MonoBehaviour
         targetAngle = Mathf.Clamp(targetAngle, minAngle, maxAngle);
     }
 
-    public void OffsetTargetAngle(float angle) {
+    public void OffsetTargetAngle(float angle, float fitInTime = 1e6f) {
+        float minDuration = Mathf.Abs(angle) / MAX_TARGET_RATE_OF_CHANGE;
+        if (fitInTime < minDuration) {
+            angle = Mathf.Sign(angle) * MAX_TARGET_RATE_OF_CHANGE * fitInTime;
+        }
+
         targetAngle += angle;
         targetAngle = Mathf.Clamp(targetAngle, minAngle, maxAngle);
     }

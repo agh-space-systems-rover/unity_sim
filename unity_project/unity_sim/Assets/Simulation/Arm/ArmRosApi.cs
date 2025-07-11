@@ -10,9 +10,9 @@ public class ArmRosApi : MonoBehaviour
     [SerializeField]
     private string curPosTopic = "/arm/joints/current_pos";
     [SerializeField]
-    private double controlTimeout = 0.1; // s
+    private double controlTimeout = 0.5; // s
     [SerializeField]
-    private float feedbackRate = 30.0f; // Hz
+    private float feedbackRate = 60.0f; // Hz
 
     // ROS
     private ROS ros;
@@ -51,19 +51,6 @@ public class ArmRosApi : MonoBehaviour
 
     private async void Update()
     {
-        if (Time.time - lastTargetVelTime < controlTimeout)
-        {
-            // Add target velocities to joints
-            float dt = Time.deltaTime;
-            for (int i = 0; i < 7; i++)
-            {
-                if (joints[i] != null)
-                {
-                    joints[i].OffsetTargetAngle(lastTargetVel[i] * dt * Mathf.Rad2Deg);
-                }
-            }
-        }
-
         // Publish position feedback with rate limiting
         if (curPosPub != null && Time.time - lastPubTime >= 1.0 / feedbackRate)
         {
@@ -86,6 +73,21 @@ public class ArmRosApi : MonoBehaviour
                 Jaw = joints[6].CurrentAngle() * Mathf.Deg2Rad
             });
             lastPubTime = Time.time;
+        }
+
+        // Apply target velocities to joints if within control timeout
+        if (Time.time - lastTargetVelTime < controlTimeout)
+        {
+            float dt = Time.deltaTime;
+            for (int i = 0; i < 7; i++)
+            {
+                if (joints[i] != null)
+                {
+                    joints[i].OffsetTargetAngle(lastTargetVel[i] * dt * Mathf.Rad2Deg, dt);
+                    // ^ fitInTime=dt arg reduces the offset if it cannot be reached in dt seconds
+                    // effectively clamping the target velocity to a maximum value
+                }
+            }
         }
     }
 }
