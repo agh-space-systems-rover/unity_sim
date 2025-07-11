@@ -2,7 +2,7 @@
 
 Unity simulation environment for AGH Space Systems robotics projects.
 
-![](./docs/cover.png)
+![](./docs/cover-marsyard.png)
 
 ## Table of Contents
 
