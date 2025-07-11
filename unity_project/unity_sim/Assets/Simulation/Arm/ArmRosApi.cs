@@ -16,7 +16,7 @@ public class ArmRosApi : MonoBehaviour
 
     // ROS
     private ROS ros;
-    private Publisher<ArmValues> curPosPub;
+    private Publisher<ArmJointValues> curPosPub;
 
     private ArmJoint[] joints = new ArmJoint[7];
 
@@ -36,7 +36,7 @@ public class ArmRosApi : MonoBehaviour
         ros = new ROS();
         
         // Subscribe to arm joints topic
-        ros.CreateSubscription<ArmValues>(tgtVelTopic, (msg) => {
+        ros.CreateSubscription<ArmJointValues>(tgtVelTopic, (msg) => {
             for (int i = 0; i < 6; i++)
             {
                 lastTargetVel[i] = msg.Joints[i];
@@ -46,7 +46,7 @@ public class ArmRosApi : MonoBehaviour
         });
         
         // Publisher for joint states feedback
-        curPosPub = ros.CreatePublisher<ArmValues>(curPosTopic);
+        curPosPub = ros.CreatePublisher<ArmJointValues>(curPosTopic);
     }
 
     private async void Update()
@@ -67,16 +67,24 @@ public class ArmRosApi : MonoBehaviour
         // Publish position feedback with rate limiting
         if (curPosPub != null && Time.time - lastPubTime >= 1.0 / feedbackRate)
         {
-            var armJoints = new ArmValues();
-            
-            armJoints.Joints = new float[6];
-            for (int i = 0; i < 6; i++)
+            await curPosPub.Publish(new ArmJointValues
             {
-                armJoints.Joints[i] = joints[i].CurrentAngle() * Mathf.Deg2Rad;
-            }
-            armJoints.Jaw = joints[6].CurrentAngle() * Mathf.Deg2Rad;
-            
-            await curPosPub.Publish(armJoints);
+                Header = new ROSBridge.StdMsgs.Header
+                {
+                    Stamp = ROSBridge.BuiltinInterfaces.Time.Realtime(),
+                    FrameId = ""
+                },
+                Joints = new float[6]
+                {
+                    joints[0].CurrentAngle() * Mathf.Deg2Rad,
+                    joints[1].CurrentAngle() * Mathf.Deg2Rad,
+                    joints[2].CurrentAngle() * Mathf.Deg2Rad,
+                    joints[3].CurrentAngle() * Mathf.Deg2Rad,
+                    joints[4].CurrentAngle() * Mathf.Deg2Rad,
+                    joints[5].CurrentAngle() * Mathf.Deg2Rad
+                },
+                Jaw = joints[6].CurrentAngle() * Mathf.Deg2Rad
+            });
             lastPubTime = Time.time;
         }
     }
