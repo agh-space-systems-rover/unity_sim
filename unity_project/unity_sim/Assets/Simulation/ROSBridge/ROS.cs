@@ -313,9 +313,13 @@ namespace ROSBridge
         {
             while (!cancellationToken.IsCancellationRequested)
             {
+                bool receivedAnything = false;
+                int numMsgs = 0;
                 // Process all available messages
                 while (messageQueue.TryDequeue(out var messageStream))
                 {
+                    receivedAnything = true;
+                    numMsgs++;
                     try
                     {
                         await ProcessWebSocketMessage(messageStream);
@@ -331,7 +335,10 @@ namespace ROSBridge
                 }
                 
                 // Small delay to avoid tight loop
-                await Task.Delay(10, cancellationToken);
+                if (!receivedAnything)
+                {
+                    await Task.Delay(1, cancellationToken);
+                }
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

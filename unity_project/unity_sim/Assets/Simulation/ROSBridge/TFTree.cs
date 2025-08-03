@@ -10,7 +10,7 @@ namespace ROSBridge
             public TransformMissingException(string message) : base(message) { }
         }
 
-        public TFTree(ROS ros, string topicPrefix = "")
+        public TFTree(ROS ros, string topicPrefix = "", bool subscribeDynamicTf = false)
         {
             tfStaticTopic = topicPrefix + tfStaticTopic;
             tfTopic = topicPrefix + tfTopic;
@@ -28,15 +28,18 @@ namespace ROSBridge
             });
 
             // Subscribe to tf.
-            ros.CreateSubscription<ROSBridge.TF2Msgs.TFMessage>(tfTopic, (msg) =>
+            if (subscribeDynamicTf)
             {
-                // For each transform.
-                foreach (ROSBridge.GeometryMsgs.TransformStamped transform in msg.Transforms)
+                ros.CreateSubscription<ROSBridge.TF2Msgs.TFMessage>(tfTopic, (msg) =>
                 {
-                    // Add the transform to the tree.
-                    AddTransform(transform);
-                }
-            });
+                    // For each transform.
+                    foreach (ROSBridge.GeometryMsgs.TransformStamped transform in msg.Transforms)
+                    {
+                        // Add the transform to the tree.
+                        AddTransform(transform);
+                    }
+                });
+            }
         }
 
         public Matrix4x4 LatestTransform(string targetFrame, string sourceFrame)

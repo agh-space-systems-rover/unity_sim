@@ -39,7 +39,7 @@ public class KalmanTF : MonoBehaviour
         ros = new ROS();
 
         // Initialize TF tree.
-        tf = new TFTree(ros, tfTopicPrefix);
+        tf = new TFTree(ros, tfTopicPrefix, subscribeDynamicTf: false);
     }
 
     private void OnApplicationQuit()
