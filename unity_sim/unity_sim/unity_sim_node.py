@@ -8,6 +8,18 @@ from ament_index_python import get_package_share_path
 from unity_sim.util import find_unity_version
 
 
+def run_and_get_output(cmd: str) -> tuple[int, str, str]:
+    # prepend distrobox-host-exec if running in Distrobox and not already present
+    if "DISTROBOX_HOST_HOME" in os.environ and not cmd.startswith("distrobox-host-exec"):
+        cmd = "distrobox-host-exec " + cmd
+
+    proc = subprocess.run(
+        cmd.split(),
+        capture_output=True,
+        text=True,
+    )
+    return proc.returncode, proc.stdout, proc.stderr
+
 class UnitySim(rclpy.node.Node):
     def __init__(self):
         super().__init__("unity_sim")
@@ -105,7 +117,16 @@ class UnitySim(rclpy.node.Node):
             stderr=subprocess.PIPE,
         )
         # Also start Unity Hub so that Unity does not try to do it itself.
-        os.system(run_cmd_unityhub)
+        # os.system(run_cmd_unityhub)
+        retcode, stdout, _ = run_and_get_output("ps aux")
+        if retcode == 0 and "unityhub" not in stdout:
+            subprocess.Popen(
+                run_cmd_unityhub.split(),
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL,
+                preexec_fn=os.setsid
+            )
 
         self.terminating = False
         self.timer = self.create_timer(0.1, self.timer_callback)
