@@ -3,10 +3,10 @@ using ROSBridge.StdMsgs;
 
 namespace ROSBridge.KalmanInterfaces
 {
-    public struct ArmJointValues
+    public struct ArmValues
     {
         [JsonIgnore]
-        public static readonly string ROSMessageType = "kalman_interfaces/msg/ArmJointValues";
+        public static readonly string ROSMessageType = "kalman_interfaces/msg/ArmValues";
 
         [JsonProperty("header")]
         public ROSBridge.StdMsgs.Header Header { get; set; }

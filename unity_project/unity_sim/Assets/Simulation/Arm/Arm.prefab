@@ -797,8 +797,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 457aaa3efe5ec6c05bef81833671d0a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tgtVelTopic: /arm/joints/target_vel
-  curPosTopic: /arm/joints/current_pos
+  curPosTopic: /arm/current_pos
+  tgtVelTopic: /arm/target_vel
+  jointsTgtVelTopic: /arm/target_vel/joints
+  jawTgtVelTopic: /arm/target_vel/jaw
+  jawTgtPosTopic: /arm/target_pos/jaw
   controlTimeout: 0.5
   feedbackRate: 60
 --- !u!1 &2651989016096659668 stripped
