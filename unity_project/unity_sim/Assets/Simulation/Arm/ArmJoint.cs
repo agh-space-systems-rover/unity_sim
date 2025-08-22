@@ -257,12 +257,22 @@ public class ArmJoint : MonoBehaviour
 
     public float CurrentAngle()
     {
-        float angle;
-        Vector3 axis;
-        transform.localRotation.ToAngleAxis(out angle, out axis);
-        Vector3 rotationAxis = GetAxisVector();
-        float signedAngle = angle * Vector3.Dot(rotationAxis, axis);
-        return NormalizeAngle(signedAngle);
+        // float angle;
+        // Vector3 axis;
+        // transform.localRotation.ToAngleAxis(out angle, out axis);
+        // Vector3 rotationAxis = GetAxisVector();
+        // float signedAngle = angle * Vector3.Dot(rotationAxis, axis);
+        // return NormalizeAngle(signedAngle);
+        return hj.angle;
+    }
+
+    public float CurrentAngleUnnormalized() {
+        float angle = CurrentAngle();
+        float offset = 360 * Mathf.Sign(this.targetAngle - angle);
+        while (Mathf.Abs(angle - this.targetAngle) > 180) {
+            angle += offset;
+        }
+        return angle;
     }
 
     private Rigidbody getYoungestAncestorRb() {

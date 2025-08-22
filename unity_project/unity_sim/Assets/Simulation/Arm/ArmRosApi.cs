@@ -63,14 +63,14 @@ public class ArmRosApi : MonoBehaviour
                 },
                 Joints = new float[6]
                 {
-                    joints[0].CurrentAngle() * Mathf.Deg2Rad,
-                    joints[1].CurrentAngle() * Mathf.Deg2Rad,
-                    joints[2].CurrentAngle() * Mathf.Deg2Rad,
-                    joints[3].CurrentAngle() * Mathf.Deg2Rad,
-                    joints[4].CurrentAngle() * Mathf.Deg2Rad,
-                    joints[5].CurrentAngle() * Mathf.Deg2Rad
+                    joints[0].CurrentAngleUnnormalized() * Mathf.Deg2Rad,
+                    joints[1].CurrentAngleUnnormalized() * Mathf.Deg2Rad,
+                    joints[2].CurrentAngleUnnormalized() * Mathf.Deg2Rad,
+                    joints[3].CurrentAngleUnnormalized() * Mathf.Deg2Rad,
+                    joints[4].CurrentAngleUnnormalized() * Mathf.Deg2Rad,
+                    joints[5].CurrentAngleUnnormalized() * Mathf.Deg2Rad
                 },
-                Jaw = joints[6].CurrentAngle() * Mathf.Deg2Rad
+                Jaw = joints[6].CurrentAngleUnnormalized() * Mathf.Deg2Rad
             });
             lastPubTime = Time.time;
         }
