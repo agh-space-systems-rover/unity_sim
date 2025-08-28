@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 using UnityEngine;
@@ -13,9 +15,9 @@ public class GPSProbeGUI : Editor
         public double z;
     }
 
-    private Waypoint[] ParseWaypoints(string waypointListStr) {
+    private List<Waypoint> ParseWaypoints(string waypointListStr) {
         string[] lines = waypointListStr.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
-        Waypoint[] waypoints = new Waypoint[lines.Length];
+        List<Waypoint> waypoints = new List<Waypoint>();
         for (int i = 0; i < lines.Length; i++) {
             string line = lines[i];
             string[] parts = line.Split(' ');
@@ -24,7 +26,7 @@ public class GPSProbeGUI : Editor
                 wp.name = parts[0];
                 wp.x = double.Parse(parts[1]);
                 wp.z = double.Parse(parts[2]);
-                waypoints[i] = wp;
+                waypoints.Add(wp);
             }
         }
         return waypoints;
@@ -39,7 +41,7 @@ public class GPSProbeGUI : Editor
         if (GUILayout.Button("Localize Waypoints"))
         {
             string waypointListStr = probe.waypointsToLocalize;
-            Waypoint[] waypoints = ParseWaypoints(waypointListStr);
+            List<Waypoint> waypoints = ParseWaypoints(waypointListStr);
 
             // Spawn a GPS device using Assets/Simulation/GPS/GPS.prefab
             GameObject gpsObj = (GameObject)Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Simulation/GPS/GPS.prefab"));
