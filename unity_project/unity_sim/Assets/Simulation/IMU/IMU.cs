@@ -34,6 +34,8 @@ public class IMU : MonoBehaviour
         prevPos = transform.position;
         prevVel = Vector3.zero;
         prevAngPos = Quaternion.identity;
+        
+        // magOffset = GPSProbe.calculateMagnitude();
 
         ros = new ROS();
         imuPublisher = ros.CreatePublisher<ROSBridge.SensorMsgs.Imu>(topic);
