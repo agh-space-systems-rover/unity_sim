@@ -39,6 +39,17 @@ public class IMU : MonoBehaviour
         imuPublisher = ros.CreatePublisher<ROSBridge.SensorMsgs.Imu>(topic);
 
         FixedUpdate();
+
+        GPS.GPSMeasurement gpsMeasurement = GPS.MeasureAtPos(transform.position);
+        if (gpsMeasurement.hasFix)
+        {
+            magOffset = (float)gpsMeasurement.yaw;
+            Debug.Log($"IMU magOffset set from GPS yaw: {magOffset} rad");
+        }
+        else
+        {
+            Debug.LogWarning("IMU: No GPS fix available to set magOffset.");
+        }
     }
 
     private void OnApplicationQuit()
