@@ -17,8 +17,6 @@ public class IMU : MonoBehaviour
     private float magOffset = 0; // rad
     [SerializeField]
     private float gravity = 9.81f;
-    [SerializeField]
-    private GPSProbe gpsProbeComponent; ///< GPSProbe reference
 
     private Vector3 prevPos;
     private Vector3 prevVel;
@@ -36,14 +34,6 @@ public class IMU : MonoBehaviour
         prevPos = transform.position;
         prevVel = Vector3.zero;
         prevAngPos = Quaternion.identity;
-        
-        if(gpsProbeComponent != null){
-            magOffset = (float)gpsProbeComponent.calculateMagnitude();
-            // Debug.Log("IMU Created.magOffset set to: " + magOffset);
-        }
-        else{
-            magOffset = 0.0f;
-        }
 
         ros = new ROS();
         imuPublisher = ros.CreatePublisher<ROSBridge.SensorMsgs.Imu>(topic);
