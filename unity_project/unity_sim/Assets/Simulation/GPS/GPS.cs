@@ -17,6 +17,17 @@ public class GPS : MonoBehaviour
         public float altitude;
     }
 
+    /// <summary>
+    /// Represents a GPS measurement.
+    /// </summary>
+    public struct GPSMeasurement
+    {
+        public Coords coords;
+        public bool hasFix;
+        public double yaw;
+        public Matrix<double> procrustesTransform;
+    }
+
     [SerializeField]
     private string frameId = "gps_link";
     
@@ -199,5 +210,63 @@ public class GPS : MonoBehaviour
             // NOTE: COVARIANCE_TYPE_UNKNOWN does not necessarily mean that the covariance will be automatically computed by navsat_transform_node.
         });
         lastCoordsWerePublished = true;
+    }
+
+    /// <summary>
+    /// Measures GPS coordinates at a given game world position.
+    /// </summary>
+    /// <param name="gameWorldPos">The game world position to measure at. If null, measures at (0,0,0).</param>
+    /// <returns>A <see cref="GPS.GPSMeasurement"/> struct containing the measured coordinates, fix status, yaw, and procrustes transform.</returns>
+    public static GPSMeasurement MeasureAtPos(Vector3? gameWorldPos = null)
+    {
+        GameObject tempGO = new GameObject("GPS_Temp_Measurement");
+        GPS gps = tempGO.AddComponent<GPS>();
+        gps.enabled = false;
+        gps.ros=null;
+
+        tempGO.transform.position = gameWorldPos ?? Vector3.zero;
+
+        gps.ScanBaseStations();
+
+        // If base stations were insufficient
+        if (!gps.initialized)
+        {
+            UnityEngine.Object.DestroyImmediate(tempGO);
+            return new GPSMeasurement
+            {
+                coords = default,
+                hasFix = false,
+                yaw = 0,
+                procrustesTransform = null
+            };
+        }
+
+        gps.FixedUpdate();
+
+        double yaw=0;
+        
+        if (gps.procrustesTransform != null &&
+            gps.procrustesTransform.RowCount >= 2 &&
+            gps.procrustesTransform.ColumnCount >= 2)
+        {
+            yaw = -Math.Atan2(
+                gps.procrustesTransform[1, 0],
+                gps.procrustesTransform[0, 0]
+            );
+            yaw -= Math.PI / 2; // East=0, North=π/2
+            yaw = Math.Atan2(Math.Sin(yaw), Math.Cos(yaw)); // Normalize to (-π, π)
+        }
+
+        GPSMeasurement result = new GPSMeasurement
+        {
+            coords = gps.hasFix ? gps.lastCoords : default,
+            hasFix = gps.hasFix,
+            yaw = yaw,
+            procrustesTransform = gps.procrustesTransform
+        };
+
+        UnityEngine.Object.DestroyImmediate(tempGO);
+
+        return result;
     }
 }
