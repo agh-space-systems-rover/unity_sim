@@ -100,8 +100,12 @@ class UnitySim(rclpy.node.Node):
         )
 
         # Prepare commands to run and kill Unity.
+        # run_cmd_unity = (
+        #     os.path.join(unity_dir, "Editor/Unity") + " -force-glcore -openfile " + scene_path
+        # )
+        # ^ Force GL Core is required for newer Unity versions to avoid multi-camera screen flicker.
         run_cmd_unity = (
-            os.path.join(unity_dir, "Editor/Unity") + " -force-glcore -openfile " + scene_path
+            os.path.join(unity_dir, "Editor/Unity") + " -openfile " + scene_path
         )
         run_cmd_unityhub = f"unityhub > /dev/null 2>&1 &"
         if self.running_in_distrobox:
