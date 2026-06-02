@@ -112,6 +112,13 @@ public class GPS : MonoBehaviour
             projPositions.Add(earth.ProjOntoPlane(centerLatLon, Vector<double>.Build.DenseOfArray(new double[] { station.latitude, station.longitude })));
         }
         procrustesTransform = Procrustes.MeanProcrustesTransform(xyPositions, projPositions);
+
+        // warn if scale is too different from 1
+        double scale = Math.Sqrt(procrustesTransform[0, 0] * procrustesTransform[0, 0] + procrustesTransform[1, 0] * procrustesTransform[1, 0]);
+        if (Math.Abs(scale - 1) > 0.1)
+        {
+            Debug.LogWarning("Procrustes transform has scale " + scale + ", which is indicates that simulated world is not to-scale with real world arena. Check GPS base station placement and coordinates.");
+        }
         
         initialized = true;
     }
