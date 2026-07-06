@@ -41,6 +41,9 @@ public class KalmanVehicle : MonoBehaviour
     private const float manualTurnRadius = 1.0F; // WSAD turn radius; m
     private const float maxTurnSpeed = 90; // turning speed of a wheel; deg/s
 
+    private bool isRotatingInPlace = false;
+    private Vector2 currentInput = Vector2.zero;
+
     // Dictionary that contains original rotations and positions of various bones.
     private Dictionary<Transform, Quaternion> ogBoneRots = new Dictionary<Transform, Quaternion>();
     private Dictionary<Transform, Vector3> ogSupToWheelVecs = new Dictionary<Transform, Vector3>();
@@ -56,11 +59,47 @@ public class KalmanVehicle : MonoBehaviour
     private float[] motorTemps = new float[4] { 20, 20, 20, 20 }; // Celsius
     private float[] swivelTemps = new float[4] { 20, 20, 20, 20 };
 
+    private void OnRotate(InputValue value)
+    {
+        isRotatingInPlace = value.isPressed;
+        UpdateWheelStates(); 
+    }
+
     private void OnMove(InputValue value)
     {
-        Vector2 input = value.Get<Vector2>();
-        
-        float turnRadius = -manualTurnRadius / input.x;
+        currentInput = value.Get<Vector2>();
+        UpdateWheelStates();
+    }
+
+    private void UpdateWheelStates()
+    {
+        if(isRotatingInPlace)
+        {
+            float rotationAngle = - Mathf.PI / 4;            
+            wheelStates.FrontLeft = new WheelState
+            {
+                Velocity = manualSpeed * currentInput.y,
+                Angle = rotationAngle
+            };
+            wheelStates.FrontRight = new WheelState
+            {
+                Velocity = -manualSpeed * currentInput.y,
+                Angle = -rotationAngle
+            };
+            wheelStates.BackLeft = new WheelState
+            {
+                Velocity = manualSpeed * currentInput.y,
+                Angle = -rotationAngle
+            };
+            wheelStates.BackRight = new WheelState
+            {
+                Velocity = -manualSpeed * currentInput.y,
+                Angle = rotationAngle
+            };
+            return;
+        }
+
+        float turnRadius = -manualTurnRadius / currentInput.x;
         float linearVelocity = manualSpeed;
         float angularVelocity = manualSpeed / turnRadius;
 
@@ -86,28 +125,28 @@ public class KalmanVehicle : MonoBehaviour
                 case 0:
                     wheelStates.FrontLeft = new WheelState
                     {
-                        Velocity = velocity * input.y,
+                        Velocity = velocity * currentInput.y,
                         Angle = angle
                     };
                     break;
                 case 1:
                     wheelStates.FrontRight = new WheelState
                     {
-                        Velocity = velocity * input.y,
+                        Velocity = velocity * currentInput.y,
                         Angle = angle
                     };
                     break;
                 case 2:
                     wheelStates.BackLeft = new WheelState
                     {
-                        Velocity = velocity * input.y,
+                        Velocity = velocity * currentInput.y,
                         Angle = angle
                     };
                     break;
                 case 3:
                     wheelStates.BackRight = new WheelState
                     {
-                        Velocity = velocity * input.y,
+                        Velocity = velocity * currentInput.y,
                         Angle = angle
                     };
                     break;
