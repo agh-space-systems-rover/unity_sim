@@ -257,13 +257,31 @@ public class ArmJoint : MonoBehaviour
 
     public float CurrentAngle()
     {
-        // float angle;
-        // Vector3 axis;
-        // transform.localRotation.ToAngleAxis(out angle, out axis);
-        // Vector3 rotationAxis = GetAxisVector();
-        // float signedAngle = angle * Vector3.Dot(rotationAxis, axis);
-        // return NormalizeAngle(signedAngle);
-        return hj.angle;
+        bool useEulerFeedback = axis == Axis.Z && minAngle <= -360 && maxAngle >= 360;
+        if (!useEulerFeedback) {
+            return hj.angle;
+        }
+
+        float angle = 0.0f;
+        Vector3 euler = transform.localEulerAngles;
+        switch (axis)
+        {
+            case Axis.X:
+                angle = euler.x;
+                break;
+            case Axis.Y:
+                angle = euler.y;
+                break;
+            case Axis.Z:
+                angle = euler.z;
+                break;
+        }
+        angle = NormalizeAngle(angle);
+        if (reverseAngle)
+        {
+            angle *= -1.0f;
+        }
+        return angle;
     }
 
     public float CurrentAngleUnnormalized() {
