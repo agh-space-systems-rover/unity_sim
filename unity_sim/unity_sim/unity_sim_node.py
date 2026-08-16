@@ -1,16 +1,20 @@
 import os
 import shutil
+import signal
+import subprocess
+
 import rclpy
 import rclpy.node
-import subprocess
-import signal
 from ament_index_python import get_package_share_path
+
 from unity_sim.util import find_unity_version
 
 
 def run_and_get_output(cmd: str) -> tuple[int, str, str]:
     # prepend distrobox-host-exec if running in Distrobox and not already present
-    if "DISTROBOX_HOST_HOME" in os.environ and not cmd.startswith("distrobox-host-exec"):
+    if "DISTROBOX_HOST_HOME" in os.environ and not cmd.startswith(
+        "distrobox-host-exec"
+    ):
         cmd = "distrobox-host-exec " + cmd
 
     proc = subprocess.run(
@@ -19,6 +23,7 @@ def run_and_get_output(cmd: str) -> tuple[int, str, str]:
         text=True,
     )
     return proc.returncode, proc.stdout, proc.stderr
+
 
 class UnitySim(rclpy.node.Node):
     def __init__(self):
@@ -105,11 +110,17 @@ class UnitySim(rclpy.node.Node):
         # )
         # ^ Force GL Core is required for newer Unity versions to avoid multi-camera screen flicker.
         run_cmd_unity = (
-            os.path.join(unity_dir, "Editor/Unity") + " -openfile " + scene_path
+            os.path.join(unity_dir, "Editor/Unity")
+            + " -autoplay -openfile "
+            + scene_path
         )
         run_cmd_unityhub = f"unityhub > /dev/null 2>&1 &"
+        display_envvar = os.environ["DISPLAY"]
         if self.running_in_distrobox:
-            run_cmd_unity = "distrobox-host-exec " + run_cmd_unity
+            run_cmd_unity = (
+                f"distrobox-host-exec env DISPLAY={display_envvar} vglrun -d egl "
+                + run_cmd_unity
+            )
             run_cmd_unityhub = "distrobox-host-exec " + run_cmd_unityhub
         self.kill_cmd = "pkill -9 -f unity_sim/unity_project 2>&1 > /dev/null"
 
@@ -129,7 +140,7 @@ class UnitySim(rclpy.node.Node):
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 stdin=subprocess.DEVNULL,
-                preexec_fn=os.setsid
+                preexec_fn=os.setsid,
             )
 
         self.terminating = False
