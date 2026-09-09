@@ -1,10 +1,16 @@
 {
   "dependencies": {
+    "com.frj.unity-sensors": "https://github.com/Field-Robotics-Japan/UnitySensors.git?path=/Assets/UnitySensors#v3.0.0b",
+    "com.frj.unity-sensors-ros": "https://github.com/Field-Robotics-Japan/UnitySensors.git?path=/Assets/UnitySensorsROS#v3.0.0b",
     "com.github-glitchenzo.nugetforunity": "https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity",
+    "com.unity.burst": "1.8.4",
     "com.unity.inputsystem": "1.6.3",
+    "com.unity.mathematics": "1.2.6",
     "com.unity.polybrush": "1.1.5",
     "com.unity.render-pipelines.universal": "15.0.6",
+    "com.unity.robotics.ros-tcp-connector": "https://github.com/Unity-Technologies/ROS-TCP-Connector.git?path=/com.unity.robotics.ros-tcp-connector",
     "com.unity.terrain-tools": "5.1.0",
+    "com.unity.toolchain.linux-x86_64": "2.0.11",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
     "com.unity.modules.animation": "1.0.0",
