@@ -89,7 +89,9 @@ namespace Kalman.UnitySimulation.Livox
         public override PointCloud2Msg Serialize()
         {
             _msg.header = _header.Serialize();
-            ROSBridgeTime stamp = ROSBridgeTime.Realtime();
+            ROSBridgeTime stamp = ROSBridgeTime.FromSimulationTime(
+                Time.unscaledTimeAsDouble
+            );
             _msg.header.stamp.sec = stamp.Sec;
             _msg.header.stamp.nanosec = stamp.Nanosec;
 

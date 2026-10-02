@@ -120,23 +120,35 @@ namespace ROSBridge
             // Wait for the connection to be established.
             await connectionEstablished.Task;
 
-            // If connection is still open.
-            if (socket == null || socket.State != WebSocketState.Open)
+            // ClientWebSocket supports only one send at a time. Unity's IMU,
+            // LiDAR, and rover publishers share this socket, so serialize all
+            // writes instead of silently losing messages during overlapping
+            // SendAsync calls.
+            await sendLock.WaitAsync();
+            try
             {
-                return;
+                // The connection may have closed while this message waited.
+                if (socket == null || socket.State != WebSocketState.Open)
+                {
+                    return;
+                }
+
+                // Serialize the message.
+                string str = JsonConvert.SerializeObject(msg);
+                // Replace "NaN" with NaN.
+                str = str.Replace("\"NaN\"", "NaN");
+                var encoded = Encoding.UTF8.GetBytes(str);
+
+                // Send it.
+                try {
+                    await socket.SendAsync(encoded, WebSocketMessageType.Text, true, CancellationToken.None);
+                } catch (Exception) {
+                    // If the connection is closed, continue without sending.
+                }
             }
-
-            // Serialize the message.
-            string str = JsonConvert.SerializeObject(msg);
-            // Replace "NaN" with NaN.
-            str = str.Replace("\"NaN\"", "NaN");
-            var encoded = Encoding.UTF8.GetBytes(str);
-
-            // Send it.
-            try {
-                await socket.SendAsync(encoded, WebSocketMessageType.Text, true, CancellationToken.None);
-            } catch (Exception) {
-                // If the connection is closed, continue without sending.
+            finally
+            {
+                sendLock.Release();
             }
         }
 
@@ -146,6 +158,7 @@ namespace ROSBridge
 
         private static List<ROS> instances = new List<ROS>();
         private static ClientWebSocket socket;
+        private static readonly SemaphoreSlim sendLock = new SemaphoreSlim(1, 1);
         private static TaskCompletionSource<bool> connectionEstablished = new TaskCompletionSource<bool>();
         private static CancellationTokenSource connectionCts;
         private static ConcurrentQueue<MemoryStream> messageQueue = new ConcurrentQueue<MemoryStream>();

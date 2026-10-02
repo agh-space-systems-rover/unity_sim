@@ -16,6 +16,7 @@ namespace ROSBridge
     {
         private readonly ROS ros;
         private readonly string topic;
+        private int publishInProgress;
         // private readonly BufferPool bufferPool;
 
         public Publisher(ROS ros, string topic)
@@ -35,12 +36,28 @@ namespace ROSBridge
                 return;
             }
 
-            await ROS.Send(new
+            // A real-time sensor must not build an unbounded queue when the
+            // WebSocket is temporarily slower than its requested frequency.
+            // Keep at most one sample in flight; a later FixedUpdate will send
+            // a fresh sample instead of delivering stale data seconds later.
+            if (Interlocked.CompareExchange(ref publishInProgress, 1, 0) != 0)
             {
-                op = "publish",
-                topic = topic,
-                msg = msg
-            });
+                return;
+            }
+
+            try
+            {
+                await ROS.Send(new
+                {
+                    op = "publish",
+                    topic = topic,
+                    msg = msg
+                });
+            }
+            finally
+            {
+                Volatile.Write(ref publishInProgress, 0);
+            }
         }
     }
 }

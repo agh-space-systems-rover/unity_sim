@@ -14,30 +14,48 @@ namespace ROSBridge.BuiltinInterfaces
         [JsonProperty("nanosec")]
         public uint Nanosec { get; set; }
 
+        [UnityEngine.RuntimeInitializeOnLoadMethod(
+            UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetSimulationClock()
+        {
+            // Enter Play Mode can preserve static fields when domain reload is
+            // disabled. Re-anchor every run so old simulation time cannot make
+            // new messages appear seconds in the future.
+            unixNanosAtSimulationStart = 0;
+        }
+
         public static Time Realtime(double offsetSeconds = 0.0)
         {
-            // If this is the first time this method is called, initialize the
-            // stopwatch.
-            if (secondsSinceEpochAtInit == 0)
+            return FromSimulationTime(
+                UnityEngine.Time.unscaledTimeAsDouble + offsetSeconds
+            );
+        }
+
+        // Converts a Unity simulation timestamp to Unix epoch time. Passing an
+        // explicit physics time lets high-rate sensors retain evenly spaced
+        // timestamps when several FixedUpdate calls run in one rendered frame.
+        public static Time FromSimulationTime(double simulationTimeSeconds)
+        {
+            if (unixNanosAtSimulationStart == 0)
             {
-                DateTime epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-                TimeSpan span = (DateTime.UtcNow - epochStart);
-                secondsSinceEpochAtInit = (long)span.TotalSeconds;
-                additionalNanosAtInit = (long)span.Milliseconds * 1000000L;
-                gameTimeAtInit = UnityEngine.Time.unscaledTimeAsDouble;
+                long unixTicks =
+                    DateTime.UtcNow.Ticks - UnixEpochTicks;
+                long unixNanos = unixTicks * 100L;
+                unixNanosAtSimulationStart =
+                    unixNanos
+                    - (long)(
+                        UnityEngine.Time.unscaledTimeAsDouble * 1000000000.0
+                    );
             }
 
-            // Integrate stopwatch time with the initial time.
-            long gameNanosSinceInit = (long)((UnityEngine.Time.unscaledTimeAsDouble - gameTimeAtInit) * 1000000000.0);
-            long nanoOffset = additionalNanosAtInit + gameNanosSinceInit;
-
-            // Add the offset.
-            nanoOffset += (long)(offsetSeconds * 1000000000.0);
+            long totalNanos =
+                unixNanosAtSimulationStart
+                + (long)(simulationTimeSeconds * 1000000000.0);
 
             return new Time
             {
-                Sec = (int)(secondsSinceEpochAtInit + nanoOffset / 1000000000L),
-                Nanosec = (uint)(nanoOffset % 1000000000L)
+                Sec = (int)(totalNanos / 1000000000L),
+                Nanosec = (uint)(totalNanos % 1000000000L)
             };
         }
 
@@ -50,8 +68,7 @@ namespace ROSBridge.BuiltinInterfaces
             };
         }
 
-        private static long secondsSinceEpochAtInit = 0;
-        private static long additionalNanosAtInit = 0;
-        private static double gameTimeAtInit = 0;
+        private const long UnixEpochTicks = 621355968000000000L;
+        private static long unixNanosAtSimulationStart = 0;
     }
 }
