@@ -22,16 +22,27 @@ public class LivoxIMU : MonoBehaviour
     private float frequency = 200.0f;
     [SerializeField]
     private float gravity = 9.81f;
+    // ICM-40609 at the Mid-360's 200 Hz output, ~100 Hz bandwidth:
+    // gyro 0.045 deg/s RMS, accelerometer 1 mg RMS.
+    [SerializeField]
+    private float gyroNoiseStd = 0.0008f;
+    [SerializeField]
+    private float accelNoiseStd = 0.01f;
+    // Constant residual after mounting. Held for the whole run.
+    [SerializeField]
+    private float gyroBiasStd = 0.001f;
+    [SerializeField]
+    private float accelBiasStd = 0.05f;
 
     private readonly double[] orientationCovariance =
         new double[9] { -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-    private readonly double[] angularVelocityCovariance =
-        new double[9] { 1e-4, 0.0, 0.0, 0.0, 1e-4, 0.0, 0.0, 0.0, 1e-4 };
-    private readonly double[] linearAccelerationCovariance =
-        new double[9] { 1e-3, 0.0, 0.0, 0.0, 1e-3, 0.0, 0.0, 0.0, 1e-3 };
+    private double[] angularVelocityCovariance;
+    private double[] linearAccelerationCovariance;
 
     private Rigidbody roverRigidbody;
     private Vector3 previousPointVelocity;
+    private Vector3 gyroBias;
+    private Vector3 accelBias;
     private Matrix4x4 unityToRos;
     private double publishAccumulator;
     private ROSConnection ros;
@@ -61,6 +72,10 @@ public class LivoxIMU : MonoBehaviour
 
         previousPointVelocity =
             roverRigidbody.GetPointVelocity(transform.position);
+        gyroBias = Gaussian3() * gyroBiasStd;
+        accelBias = Gaussian3() * accelBiasStd;
+        angularVelocityCovariance = DiagonalCovariance(gyroNoiseStd * gyroNoiseStd);
+        linearAccelerationCovariance = DiagonalCovariance(accelNoiseStd * accelNoiseStd);
 
         // ROS +X is Unity +Z, ROS +Y is Unity -X, ROS +Z is Unity +Y.
         Matrix4x4 rosToUnity = Matrix4x4.identity;
@@ -115,14 +130,41 @@ public class LivoxIMU : MonoBehaviour
                 UnityEngine.Time.fixedUnscaledTimeAsDouble
             );
 
+        Vector3 measuredAcceleration =
+            bodyAcceleration + accelBias + Gaussian3() * accelNoiseStd;
+        Vector3 measuredAngularVelocity =
+            bodyAngularVelocity + gyroBias + Gaussian3() * gyroNoiseStd;
+
         PublishMeasurement(
             stamp,
-            unityToRos.MultiplyVector(bodyAcceleration),
+            unityToRos.MultiplyVector(measuredAcceleration),
             // Unity and ROS use opposite coordinate handedness. Acceleration
             // is a polar vector, but angular velocity is an axial vector, so
             // it requires the additional sign inversion under this reflection.
-            -unityToRos.MultiplyVector(bodyAngularVelocity)
+            -unityToRos.MultiplyVector(measuredAngularVelocity)
         );
+    }
+
+    private static Vector3 Gaussian3()
+    {
+        return new Vector3(Gaussian(), Gaussian(), Gaussian());
+    }
+
+    private static float Gaussian()
+    {
+        float u1 = Mathf.Max(1e-6f, Random.value);
+        float u2 = Random.value;
+        return Mathf.Sqrt(-2f * Mathf.Log(u1)) * Mathf.Cos(2f * Mathf.PI * u2);
+    }
+
+    private static double[] DiagonalCovariance(float variance)
+    {
+        return new double[9]
+        {
+            variance, 0.0, 0.0,
+            0.0, variance, 0.0,
+            0.0, 0.0, variance,
+        };
     }
 
     private void PublishMeasurement(

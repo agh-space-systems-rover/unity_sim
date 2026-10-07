@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using ROSBridge;
 
@@ -20,25 +18,27 @@ public class IMU : MonoBehaviour
 
     private Vector3 prevPos;
     private Vector3 prevVel;
-    private Vector3 prevAcc;
+    private Vector3 linearAcceleration;
     private Quaternion prevAngPos;
-    private Quaternion prevAngVel;
+    private Vector3 angularVelocity;
+    private Rigidbody parentRigidbody;
     private ROS ros;
     private Publisher<ROSBridge.SensorMsgs.Imu> imuPublisher = null;
-    private double lastPublishTime = 0.0;
+    private double publishAccumulator = 0.0;
     private double[] covariance = new double[9] { 1e-3, 0, 0, 0, 1e-3, 0, 0, 0, 1e-3 };
     private float noMagYawError = 0.0f;
 
     private void Start()
     {
+        parentRigidbody = GetComponentInParent<Rigidbody>();
         prevPos = transform.position;
-        prevVel = Vector3.zero;
-        prevAngPos = Quaternion.identity;
+        prevVel = parentRigidbody != null
+            ? parentRigidbody.GetPointVelocity(transform.position)
+            : Vector3.zero;
+        prevAngPos = transform.rotation;
 
         ros = new ROS();
         imuPublisher = ros.CreatePublisher<ROSBridge.SensorMsgs.Imu>(topic);
-
-        FixedUpdate();
 
         GPS.GPSMeasurement gpsMeasurement = GPS.MeasureAtPos(transform.position);
         if (gpsMeasurement.hasFix)
@@ -62,55 +62,84 @@ public class IMU : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // linear update
-        Vector3 pos = transform.position;
-        Vector3 vel = (pos - prevPos) / Time.fixedDeltaTime;
-        Vector3 acc = (vel - prevVel) / Time.fixedDeltaTime;
-        prevPos = pos;
-        prevVel = vel;
-        prevAcc = acc;
+        Vector3 worldVelocity;
+        Vector3 worldAngularVelocity;
 
-        // angular update
-        Quaternion angPos = transform.rotation; // world space rotation as a quaternion
-        Quaternion deltaAngPos = angPos * Quaternion.Inverse(prevAngPos);
-        // Vector3 deltaAngPosAxis = new Vector3(deltaAngPos.x, deltaAngPos.y, deltaAngPos.z).normalized;
-        // float deltaAngPosAngle = Mathf.Acos(deltaAngPos.w) * 2.0f;
-        // Quaternion angVel = Quaternion.AngleAxis(deltaAngPosAngle / Time.fixedDeltaTime, deltaAngPosAxis);
-        Quaternion angVel = Quaternion.SlerpUnclamped(Quaternion.identity, deltaAngPos, 1 / Time.fixedDeltaTime);
-        prevAngPos = angPos;
-        prevAngVel = angVel;
+        if (parentRigidbody != null)
+        {
+            // GetPointVelocity includes the velocity induced by rotation at the
+            // sensor's offset from the rigid body's center of mass.
+            worldVelocity = parentRigidbody.GetPointVelocity(transform.position);
+            worldAngularVelocity = parentRigidbody.angularVelocity;
+        }
+        else
+        {
+            Vector3 pos = transform.position;
+            worldVelocity = (pos - prevPos) / Time.fixedDeltaTime;
+            prevPos = pos;
+
+            Quaternion angPos = transform.rotation;
+            Quaternion deltaAngPos = angPos * Quaternion.Inverse(prevAngPos);
+            deltaAngPos.ToAngleAxis(out float angleDegrees, out Vector3 axis);
+            if (angleDegrees > 180.0f)
+            {
+                angleDegrees -= 360.0f;
+            }
+            worldAngularVelocity =
+                axis * (angleDegrees * Mathf.Deg2Rad / Time.fixedDeltaTime);
+            prevAngPos = angPos;
+        }
+
+        Vector3 worldAcceleration =
+            (worldVelocity - prevVel) / Time.fixedDeltaTime;
+        prevVel = worldVelocity;
+
+        // An accelerometer reports specific force, so a stationary sensor
+        // measures the acceleration opposite to gravity.
+        Vector3 specificForce =
+            worldAcceleration - Physics.gravity.normalized * gravity;
+        linearAcceleration = transform.InverseTransformDirection(specificForce);
+
+        // sensor_msgs/Imu requires angular velocity in the sensor frame.
+        // The previous implementation left it in the Unity world frame.
+        angularVelocity =
+            transform.InverseTransformDirection(worldAngularVelocity);
 
         // update noMagYawError
         if (!useMag)
         {
-            float angSpeed = Quaternion.Angle(Quaternion.identity, angVel) * Mathf.Deg2Rad;
+            float angSpeed = angularVelocity.magnitude;
             noMagYawError += angSpeed * Time.fixedDeltaTime * Random.Range(-0.05f, 0.3f);
         } else {
             noMagYawError = 0.0f;
         }
+
+        if (imuPublisher == null || frequency <= 0)
+        {
+            return;
+        }
+
+        publishAccumulator += Time.fixedDeltaTime;
+        double publishPeriod = 1.0 / frequency;
+        if (publishAccumulator + 1e-9 < publishPeriod)
+        {
+            return;
+        }
+        publishAccumulator -= publishPeriod;
+        if (publishAccumulator < 0.0 || publishAccumulator >= publishPeriod)
+        {
+            // The physics rate is the maximum rate of unique IMU samples.
+            publishAccumulator = 0.0;
+        }
+
+        PublishMeasurement();
     }
 
-    private async void Update()
+    private async void PublishMeasurement()
     {
-        // publish to ROS
-        // See: https://web.archive.org/web/20160612171450/http://wiki.ros.org/robot_localization/Tutorials/Preparing%20Your%20Sensor%20Data
-        if (imuPublisher == null)
-        {
-            return;
-        }
-
-        double currentTime = Time.unscaledTimeAsDouble;
-        if (currentTime - lastPublishTime < 1.0 / frequency)
-        {
-            return;
-        }
-        lastPublishTime = currentTime;
-
-        Quaternion angPos = prevAngPos;
-        Quaternion angVel = prevAngVel;
-        Vector3 acc = prevAcc;
-        acc.y += gravity; // gravity compensation
-        acc = transform.InverseTransformDirection(acc); // make acceleration local to the sensor
+        Quaternion angPos = transform.rotation;
+        Vector3 angVel = angularVelocity;
+        Vector3 acc = linearAcceleration;
 
         Matrix4x4 rosToUnity = Matrix4x4.identity;
         // 0, -1, 0 // Ros +Y is Unity -X (left) (second column)
@@ -127,12 +156,8 @@ public class IMU : MonoBehaviour
         angPosMat = unityToRos * unityToOffsetUnity * angPosMat * rosToUnity;
         angPos = angPosMat.rotation;
 
-        // Transform angular velocity to ROS coordinate system.
-        Matrix4x4 angVelMat = Matrix4x4.Rotate(angVel);
-        angVelMat = unityToRos * angVelMat * rosToUnity;
-        angVel = angVelMat.rotation;
-
-        // Transform acceleration vector to ROS coordinate system.
+        // Transform local sensor vectors to ROS coordinates.
+        angVel = unityToRos.MultiplyVector(angVel);
         acc = unityToRos.MultiplyVector(acc);
 
         await imuPublisher.Publish(new ROSBridge.SensorMsgs.Imu
@@ -152,9 +177,9 @@ public class IMU : MonoBehaviour
             OrientationCovariance = covariance,
             AngularVelocity = new ROSBridge.GeometryMsgs.Vector3
             {
-                X = toNormalizedRad(angVel.eulerAngles.x), // roll
-                Y = toNormalizedRad(angVel.eulerAngles.y), // pitch
-                Z = toNormalizedRad(angVel.eulerAngles.z)  // yaw
+                X = angVel.x,
+                Y = angVel.y,
+                Z = angVel.z
             },
             AngularVelocityCovariance = covariance,
             LinearAcceleration = new ROSBridge.GeometryMsgs.Vector3
@@ -165,21 +190,5 @@ public class IMU : MonoBehaviour
             },
             LinearAccelerationCovariance = covariance
         });
-    }
-
-    private float toNormalizedRad(float angle)
-    {
-        // while (angle > 180.0f)
-        // {
-        //     angle -= 360.0f;
-        // }
-        // while (angle < -180.0f)
-        // {
-        //     angle += 360.0f;
-        // }
-        // return angle;
-        float n = Mathf.Floor((angle + 180) / 360);
-        angle -= n * 360;
-        return angle * Mathf.Deg2Rad;
     }
 }
