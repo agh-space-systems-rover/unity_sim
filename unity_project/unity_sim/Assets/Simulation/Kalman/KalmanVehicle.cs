@@ -275,11 +275,10 @@ public class KalmanVehicle : MonoBehaviour
         Vector3 brLocal = parentTransform.InverseTransformPoint(brPos);
         Vector3 axleLocal = brLocal - blLocal;
 
-        Vector2 axleXZ = new Vector2(axleLocal.x, axleLocal.z);
+        float rollAngleDeg = Mathf.Atan2(axleLocal.y, axleLocal.x) * Mathf.Rad2Deg;
+        Quaternion deltaRot = Quaternion.Euler(0, 0, rollAngleDeg);
 
-        float angleY = Vector2.SignedAngle(Vector2.right, axleXZ);
-
-        differentialBone.localRotation = ogDiffRot * Quaternion.Euler(0, angleY, 0);
+        differentialBone.localRotation = deltaRot * ogDiffRot;
     }
 
     private void CopyWheelTransform(WheelCollider wheel, Transform suspBone, Transform turnBone, Transform wheelBone, bool rightSide, bool front)

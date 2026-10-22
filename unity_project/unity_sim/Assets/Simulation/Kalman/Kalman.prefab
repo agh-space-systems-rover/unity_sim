@@ -308,7 +308,7 @@ MonoBehaviour:
   blWheel: {fileID: 3642692935190731031}
   brWheel: {fileID: 8885028633806761464}
   rootBone: {fileID: 8664175595105386969}
-  differentialBone: {fileID: 1605327489610771349}
+  differentialBone: {fileID: 49502093591702032}
   flSuspBone: {fileID: 6321789479274178369}
   frSuspBone: {fileID: 7142569122946907378}
   blSuspBone: {fileID: 947428137234328634}
@@ -1246,6 +1246,12 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 88911dde204dc3f0e86089a857ce8755, type: 3}
+--- !u!4 &49502093591702032 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3941745508269139289, guid: 88911dde204dc3f0e86089a857ce8755,
+    type: 3}
+  m_PrefabInstance: {fileID: 3899054339996798793}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &947428137234328634 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -4955708240450313357, guid: 88911dde204dc3f0e86089a857ce8755,
@@ -1261,12 +1267,6 @@ Transform:
 --- !u!4 &1566590318009176679 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2567505729320951086, guid: 88911dde204dc3f0e86089a857ce8755,
-    type: 3}
-  m_PrefabInstance: {fileID: 3899054339996798793}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &1605327489610771349 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -6891776699262884644, guid: 88911dde204dc3f0e86089a857ce8755,
     type: 3}
   m_PrefabInstance: {fileID: 3899054339996798793}
   m_PrefabAsset: {fileID: 0}
