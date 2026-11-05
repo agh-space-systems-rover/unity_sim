@@ -577,6 +577,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5057984323332529706}
   - component: {fileID: 4092315865314792981}
+  - component: {fileID: 7193471672045981229}
   m_Layer: 0
   m_Name: BaseLink
   m_TagString: Untagged
@@ -634,6 +635,22 @@ MonoBehaviour:
   - frame: gps_link
     transform: {fileID: 811978102504681479}
   frequency: 1
+--- !u!114 &7193471672045981229
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7608884778138272795}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ab77c8d51864c7c91eec742dc4112f4, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  topic: /benchmark/ground_truth
+  frameId: unity_world
+  childFrameId: base_link
+  frequency: 100
 --- !u!1 &8606949053620083420
 GameObject:
   m_ObjectHideFlags: 0

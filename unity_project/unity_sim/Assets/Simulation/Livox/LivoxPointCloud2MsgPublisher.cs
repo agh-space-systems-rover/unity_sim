@@ -1,13 +1,13 @@
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using Unity.Robotics.ROSTCPConnector;
 using RosMessageTypes.Sensor;
 using ROSBridgeTime = ROSBridge.BuiltinInterfaces.Time;
 
 using UnitySensors.Attribute;
 using UnitySensors.DataType.Sensor.PointCloud;
 using UnitySensors.Interface.Sensor;
-using UnitySensors.ROS.Publisher;
 using UnitySensors.ROS.Serializer;
 using UnitySensors.ROS.Serializer.Std;
 using UnitySensors.Sensor;
@@ -65,7 +65,10 @@ namespace Kalman.UnitySimulation.Livox
 
             _pointsNum = _sourceInterface.pointCloud.points.Length;
             int dataSize = _pointsNum * PointStep;
-            _pointIntervalNanoseconds = _sensor.dt * 1e9 / _pointsNum;
+            // The Unity raycast sensor captures the whole cloud in one
+            // rendered frame. Advertising a synthetic 100 ms rolling scan
+            // makes FAST-LIO deskew points that were actually simultaneous.
+            _pointIntervalNanoseconds = 0.0;
 
             _msg.height = 1;
             _msg.width = (uint)_pointsNum;
@@ -89,8 +92,15 @@ namespace Kalman.UnitySimulation.Livox
         public override PointCloud2Msg Serialize()
         {
             _msg.header = _header.Serialize();
+            // Match the physics clock used by the simulated Livox IMU.
+            // Time.unscaledTime jumps by the full duration of a rendered-frame
+            // hitch while FixedUpdate may still be catching up, separating
+            // LiDAR and IMU timestamps exactly when Unity stutters.
+            double sampleTime =
+                (_sensor as AsyncRaycastLivoxSensor)?.sampleTime
+                ?? Time.fixedUnscaledTimeAsDouble;
             ROSBridgeTime stamp = ROSBridgeTime.FromSimulationTime(
-                Time.unscaledTimeAsDouble
+                sampleTime
             );
             _msg.header.stamp.sec = stamp.Sec;
             _msg.header.stamp.nanosec = stamp.Nanosec;
@@ -141,18 +151,55 @@ namespace Kalman.UnitySimulation.Livox
         }
     }
 
-    public class LivoxPointCloud2MsgPublisher
-        : RosMsgPublisher<LivoxPointCloud2MsgSerializer, PointCloud2Msg>
+    public class LivoxPointCloud2MsgPublisher : MonoBehaviour
     {
+        [SerializeField]
+        private float _frequency = 10.0f;
+        [SerializeField]
+        private string _topicName;
+        [SerializeField]
+        private LivoxPointCloud2MsgSerializer _serializer;
         [SerializeField, Interface(typeof(IPointCloudInterface<PointXYZI>))]
         private UnityEngine.Object _source;
 
+        private ROSConnection ros;
+        private UnitySensor sensor;
+
         private void Awake()
         {
+            sensor = _source as UnitySensor;
             _serializer.SetSource(
                 _source as IPointCloudInterface<PointXYZI>,
-                _source as UnitySensor
+                sensor
             );
+        }
+
+        private void Start()
+        {
+            if (_frequency <= 0.0f || sensor == null)
+            {
+                enabled = false;
+                return;
+            }
+
+            ros = ROSConnection.GetOrCreateInstance();
+            ros.RegisterPublisher<PointCloud2Msg>(_topicName);
+            _serializer.Init();
+            sensor.onSensorUpdated += PublishCompletedScan;
+        }
+
+        private void PublishCompletedScan()
+        {
+            ros.Publish(_topicName, _serializer.Serialize());
+        }
+
+        private void OnDestroy()
+        {
+            if (sensor != null)
+            {
+                sensor.onSensorUpdated -= PublishCompletedScan;
+            }
+            _serializer.OnDestroy();
         }
     }
 }

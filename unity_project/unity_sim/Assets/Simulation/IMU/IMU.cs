@@ -164,7 +164,12 @@ public class IMU : MonoBehaviour
         {
             Header = new ROSBridge.StdMsgs.Header
             {
-                Stamp = ROSBridge.BuiltinInterfaces.Time.Realtime(),
+                // This callback is driven by FixedUpdate. Using render-frame
+                // time gives catch-up physics samples duplicate timestamps
+                // after a frame hitch and destabilizes downstream filters.
+                Stamp = ROSBridge.BuiltinInterfaces.Time.FromSimulationTime(
+                    Time.fixedUnscaledTimeAsDouble
+                ),
                 FrameId = frameId
             },
             Orientation = new ROSBridge.GeometryMsgs.Quaternion
