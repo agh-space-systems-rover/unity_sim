@@ -605,6 +605,7 @@ Transform:
   - {fileID: 4039356925598959716}
   - {fileID: 2000835173705952524}
   - {fileID: 811978102504681479}
+  - {fileID: 5910283746501928375}
   m_Father: {fileID: 21932948658182425}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &4092315865314792981
@@ -634,6 +635,8 @@ MonoBehaviour:
     transform: {fileID: 4039356925598959716}
   - frame: gps_link
     transform: {fileID: 811978102504681479}
+  - frame: livox_frame
+    transform: {fileID: 5910283746501928375}
   frequency: 1
 --- !u!114 &7193471672045981229
 MonoBehaviour:
@@ -651,6 +654,37 @@ MonoBehaviour:
   frameId: unity_world
   childFrameId: base_link
   frequency: 100
+--- !u!1 &5910283746501928374
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5910283746501928375}
+  m_Layer: 0
+  m_Name: livox_frame
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5910283746501928375
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5910283746501928374}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 1, w: 0}
+  m_LocalPosition: {x: 0, y: 0.4, z: -0.3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5057984323332529706}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 180}
 --- !u!1 &8606949053620083420
 GameObject:
   m_ObjectHideFlags: 0
