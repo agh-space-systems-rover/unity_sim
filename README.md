@@ -79,6 +79,11 @@ On first run, the project will take a while to start as it needs to download som
 
 If you wish to upgrade the simulation to a newer version of Unity, please open it using Unity Hub. The project directory can be found [here](./unity_project/unity_sim) and will need to be manually selected in Unity Hub.
 
+When upgrading, keep in mind:
+
+- **Project Settings -> Player -> Run In Background** must stay enabled. Since Unity 6 the editor honors it in play mode and otherwise throttles the simulation to ~11 FPS whenever its window loses focus.
+- RealSense capture relies on URP's Render Graph **Compatibility Mode**. Since Unity 6.3 the setting only takes effect with the `URP_COMPATIBILITY_MODE` scripting define (set in Player settings); without it every depth pixel is 0. Compatibility Mode is removed in Unity 6.4, so moving past 6.3 LTS requires porting the RealSense capture to the Render Graph API first.
+
 ## IMU Simulation
 
 The simulation provides a virtual IMU sensor. It is a standalone [C# script](./unity_project/unity_sim/Assets/Simulation/IMU/IMU.cs) that can be attached to any GameObject of choice.
