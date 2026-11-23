@@ -6,7 +6,6 @@ using System.Text.RegularExpressions;
 
 using UnityEngine;
 using UnityEngine.Serialization;
-using UnityEditor;
 
 using ROSBridge;
 using ROSBridge.KalmanInterfaces;
