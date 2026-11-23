@@ -132,11 +132,22 @@ namespace ROSBridge
             str = str.Replace("\"NaN\"", "NaN");
             var encoded = Encoding.UTF8.GetBytes(str);
 
-            // Send it.
+            // Send it. ClientWebSocket allows only one outstanding SendAsync; every
+            // publisher shares this socket, so overlapping sends would throw and be
+            // dropped. Queue them instead, continuing on the thread pool so the next
+            // queued send starts as soon as this one completes rather than on the
+            // next Unity frame (Unity's SynchronizationContext runs once per frame).
+            await sendLock.WaitAsync().ConfigureAwait(false);
             try {
-                await socket.SendAsync(encoded, WebSocketMessageType.Text, true, CancellationToken.None);
+                var s = socket;
+                if (s != null && s.State == WebSocketState.Open)
+                {
+                    await s.SendAsync(encoded, WebSocketMessageType.Text, true, CancellationToken.None).ConfigureAwait(false);
+                }
             } catch (Exception) {
                 // If the connection is closed, continue without sending.
+            } finally {
+                sendLock.Release();
             }
         }
 
@@ -146,6 +157,7 @@ namespace ROSBridge
 
         private static List<ROS> instances = new List<ROS>();
         private static ClientWebSocket socket;
+        private static readonly SemaphoreSlim sendLock = new SemaphoreSlim(1, 1);
         private static TaskCompletionSource<bool> connectionEstablished = new TaskCompletionSource<bool>();
         private static CancellationTokenSource connectionCts;
         private static ConcurrentQueue<MemoryStream> messageQueue = new ConcurrentQueue<MemoryStream>();
