@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.Experimental.Rendering;
 using Unity.Collections;
 using ROSBridge;
@@ -36,6 +37,7 @@ public class RealSense : MonoBehaviour
     ROSBridge.BuiltinInterfaces.Time frameStamp;
     RenderTexture asyncRt = null;
     Material depthMaterial = null;
+    RealSenseCapturePass capturePass = null;
 
     [DllImport("UnityRSPublisherPlugin")]
     private static extern void OpenBridgeConnection(string id, int width, int height, float vFov, float depthMin, float depthMax);
@@ -49,8 +51,8 @@ public class RealSense : MonoBehaviour
         // camera settings
         cam = GetComponent<Camera>();
         cam.enabled = true;
-        cam.depthTextureMode = DepthTextureMode.Depth;
-        cam.targetTexture = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32);
+        // Render Graph requires a depth buffer on camera output textures.
+        cam.targetTexture = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32);
         cam.nearClipPlane = 0.01F;
         cam.farClipPlane = 3000;
         cam.fieldOfView = vFov;
@@ -89,6 +91,8 @@ public class RealSense : MonoBehaviour
         depthMaterial = new Material(depthShader);
         depthMaterial.SetFloat("_DepthMin", depthMin);
         depthMaterial.SetFloat("_DepthMax", depthMax);
+        depthMaterial.SetVector("_RSTexelSize", new Vector4(1.0F / width, 1.0F / height, 0, 0));
+        capturePass = new RealSenseCapturePass(depthMaterial);
 
         // async capture
         asyncRt = new RenderTexture(width, height, 0);
@@ -188,6 +192,9 @@ public class RealSense : MonoBehaviour
         finally
         {
             if (buffer.IsCreated) buffer.Dispose();
+            capturePass?.Dispose();
+            syncRt.Release();
+            asyncRt.Release();
             ros.Close();
             CloseBridgeConnection(id);
         }
@@ -195,26 +202,34 @@ public class RealSense : MonoBehaviour
 
     private void OnEnable()
     {
+        RenderPipelineManager.beginCameraRendering += RenderPipelineManager_beginCameraRendering;
         RenderPipelineManager.endCameraRendering += RenderPipelineManager_endCameraRendering;
     }
 
     private void OnDisable()
     {
+        RenderPipelineManager.beginCameraRendering -= RenderPipelineManager_beginCameraRendering;
         RenderPipelineManager.endCameraRendering -= RenderPipelineManager_endCameraRendering;
+    }
+
+    private void RenderPipelineManager_beginCameraRendering(ScriptableRenderContext context, Camera camera)
+    {
+        if (camera == cam && asyncRt != null && capturePass != null)
+        {
+            // Pack color + depth into asyncRt at the end of this camera's render graph.
+            capturePass.SetTargets(cam.targetTexture, asyncRt);
+            cam.GetUniversalAdditionalCameraData().scriptableRenderer.EnqueuePass(capturePass);
+        }
     }
 
     private void RenderPipelineManager_endCameraRendering(ScriptableRenderContext context, Camera camera)
     {
-        if (camera == cam && asyncRt != null && depthMaterial != null)
+        if (camera == cam && asyncRt != null && capturePass != null)
         {
             cam.enabled = false;
 
             // Save the time stamp of the frame.
             frameStamp = ROSBridge.BuiltinInterfaces.Time.Realtime();
-            // Blit through the depth shader to the async gbuffer.
-            depthMaterial.SetTexture("_ColorTex", cam.targetTexture);
-            Graphics.Blit(cam.targetTexture, asyncRt, depthMaterial);
-
 
             frameAvailable = true;
         }
