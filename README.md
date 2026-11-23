@@ -1,10 +1,10 @@
-# Unity Simulation
+# Unity Simulation <!-- omit in toc -->
 
 Unity simulation environment for AGH Space Systems robotics projects.
 
 ![](./docs/cover-marsyard.png)
 
-## Table of Contents
+## Table of Contents <!-- omit in toc -->
 
 - [Runtime Prerequisites](#runtime-prerequisites)
 - [Getting Started](#getting-started)
@@ -13,6 +13,7 @@ Unity simulation environment for AGH Space Systems robotics projects.
 - [RealSense Cameras](#realsense-cameras)
 - [RealSense Publisher Plugin](#realsense-publisher-plugin)
 - [Creating a New Map](#creating-a-new-map)
+- [Adding ArUco Dictionaries](#adding-aruco-dictionaries)
 
 ## Runtime Prerequisites
 
@@ -39,7 +40,7 @@ Once the workspace is built, find out which Unity version is required by this pr
 ros2 run unity_sim unity_version
 ```
 
-And this command will yield something like `Unity 2023.1.9f1`. (Exact version may differ!)
+And this command will yield something like `Unity 6000.3.29f1`. (Exact version may differ!)
 
 To setup this version of Unity on your system, you'll need Unity Hub. It can be installed by following the [official instructions](https://docs.unity3d.com/hub/manual/InstallHub.html#install-hub-linux).
 
@@ -66,13 +67,26 @@ Once the download is complete, it's a good idea to test your installation by run
 ros2 launch unity_sim unity_sim.launch.py
 ```
 
+When Unity 6 or a newer licensing stack is installed through Unity Hub, Unity may need to be opened manually first. Open the project through Unity Hub, then start only the ROS-facing services:
+
+```bash
+ros2 launch unity_sim unity_sim.launch.py selective_launch:=server_only
+```
+
+This mode starts `rosbridge_websocket` and the static TF republisher, but does not launch Unity or the RealSense publisher. Unity and ROS can be started in either order; Unity will reconnect to rosbridge while the scene is running.
+
 On first run, the project will take a while to start as it needs to download some packages from the web and import all the assets. However, future runs will be significantly faster. Unity may still take up to a dozen of seconds to start, so you can use the above command to run the simulation in a new terminal window, while you continue to restart other nodes separately.
 
 If you wish to upgrade the simulation to a newer version of Unity, please open it using Unity Hub. The project directory can be found [here](./unity_project/unity_sim) and will need to be manually selected in Unity Hub.
 
+When upgrading, keep in mind:
+
+- **Project Settings -> Player -> Run In Background** must stay enabled. Since Unity 6 the editor honors it in play mode and otherwise throttles the simulation to ~11 FPS whenever its window loses focus.
+- RealSense capture relies on URP's Render Graph **Compatibility Mode**. Since Unity 6.3 the setting only takes effect with the `URP_COMPATIBILITY_MODE` scripting define (set in Player settings); without it every depth pixel is 0. Compatibility Mode is removed in Unity 6.4, so moving past 6.3 LTS requires porting the RealSense capture to the Render Graph API first.
+
 ## IMU Simulation
 
-The simulation provides a virtual IMU sensor. It is a standalone [C# script](./unity_sim/Assets/Simulation/IMU/IMU.cs) that can be attached to any GameObject of choice.
+The simulation provides a virtual IMU sensor. It is a standalone [C# script](./unity_project/unity_sim/Assets/Simulation/IMU/IMU.cs) that can be attached to any GameObject of choice.
 
 The sensor works by comparing the subsequent positions of the GameObject between subsequent physics frames. This allows it to recover velocity. Then the velocity is compared between subsequent frames to compute acceleration. Angular values are derived in a similar manner.
 

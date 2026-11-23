@@ -4,6 +4,7 @@ import rclpy
 import rclpy.node
 import subprocess
 import signal
+import time
 from ament_index_python import get_package_share_path
 from unity_sim.util import find_unity_version
 
@@ -107,11 +108,36 @@ class UnitySim(rclpy.node.Node):
         run_cmd_unity = (
             os.path.join(unity_dir, "Editor/Unity") + " -openfile " + scene_path
         )
-        run_cmd_unityhub = f"unityhub > /dev/null 2>&1 &"
         if self.running_in_distrobox:
             run_cmd_unity = "distrobox-host-exec " + run_cmd_unity
-            run_cmd_unityhub = "distrobox-host-exec " + run_cmd_unityhub
         self.kill_cmd = "pkill -9 -f unity_sim/unity_project 2>&1 > /dev/null"
+
+        # Unity needs Unity Hub and its Licensing Client in the interactive user session.
+        hub_args = ["unityhub"]
+        if self.running_in_distrobox:
+            hub_args = ["distrobox-host-exec"] + hub_args
+
+        retcode, stdout, _ = run_and_get_output("ps aux")
+        if retcode == 0 and "unityhub" not in stdout:
+            subprocess.Popen(
+                hub_args,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL,
+                preexec_fn=os.setsid,
+            )
+
+        for _ in range(40):
+            retcode, stdout, _ = run_and_get_output("ps aux")
+            if retcode == 0 and "Unity.Licensing.Client" in stdout:
+                break
+            time.sleep(0.25)
+        else:
+            self.get_logger().warning(
+                "Unity Hub did not report a Licensing Client process; Unity may fail to start"
+            )
+
+        time.sleep(3)
 
         # Run Unity in background.
         self.get_logger().info(f"Running Unity with command: {run_cmd_unity}")
@@ -120,17 +146,6 @@ class UnitySim(rclpy.node.Node):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        # Also start Unity Hub so that Unity does not try to do it itself.
-        # os.system(run_cmd_unityhub)
-        retcode, stdout, _ = run_and_get_output("ps aux")
-        if retcode == 0 and "unityhub" not in stdout:
-            subprocess.Popen(
-                run_cmd_unityhub.split(),
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                stdin=subprocess.DEVNULL,
-                preexec_fn=os.setsid
-            )
 
         self.terminating = False
         self.timer = self.create_timer(0.1, self.timer_callback)
