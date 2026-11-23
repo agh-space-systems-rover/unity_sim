@@ -18,7 +18,18 @@ def launch_setup(context):
 
     description = []
 
-    if selective_launch != "only_rs_pub":
+    if selective_launch in ("server_only", "manual_unity"):
+        description += [
+            # rosbridge server for C# <-> ROS communication
+            Node(package="rosbridge_server", executable="rosbridge_websocket"),
+            # ROSBridge has problems with transient local QOS,
+            # so we continuously republish the static TFs
+            Node(
+                package="unity_tf_static_republisher",
+                executable="unity_tf_static_republisher",
+            ),
+        ]
+    elif selective_launch != "only_rs_pub":
         description += [
             Node(
                 package="unity_sim",
@@ -38,7 +49,7 @@ def launch_setup(context):
             ),
         ]
 
-    if selective_launch != "no_rs_pub":
+    if selective_launch not in ("no_rs_pub", "server_only"):
         # custom Unix Socket server for camera image transfer
         if component_container:
             description.append(
@@ -77,8 +88,8 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "selective_launch",
                 default_value="all",
-                choices=["all", "no_rs_pub", "only_rs_pub"],
-                description="Selectively launch Unity and/or camera publisher.",
+                choices=["all", "no_rs_pub", "only_rs_pub", "server_only", "manual_unity"],
+                description="Selectively launch Unity, ROS servers, and/or camera publisher. server_only launches only rosbridge + tf republisher. manual_unity launches rosbridge + tf republisher + RealSense publisher and assumes Unity is launched manually through Unity Hub.",
             ),
             OpaqueFunction(function=launch_setup),
         ]
