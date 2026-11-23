@@ -39,12 +39,14 @@ Once the workspace is built, find out which Unity version is required by this pr
 ros2 run unity_sim unity_version
 ```
 
-And this command will yield something like `Unity 2023.1.9f1`. (Exact version may differ!)
+And this command will yield something like `Unity 6000.6.10f1`. (Exact version may differ!)
 
 To setup this version of Unity on your system, you'll need Unity Hub. It can be installed by following the [official instructions](https://docs.unity3d.com/hub/manual/InstallHub.html#install-hub-linux).
 
 > [!TIP]
 > Users on Arch Linux can install `unityhub` from the AUR.
+>
+> On NixOS, the editor must run inside Unity Hub's FHS environment, and Unity 6's shader compiler needs `libtinfo.so.6`. Run the editor with ncurses on the library path, e.g. `env LD_LIBRARY_PATH=${pkgs.ncurses}/lib unityhub-fhs-env <editor>`, otherwise shader compilation times out. Adding ncurses to the FHS environment is not enough: nixpkgs' `libtinfo.so.6` is a symlink to `libncursesw.so.6`, so the environment's `ldconfig` cache never lists it.
 
 Once Unity Hub is installed, it should prompt you to sign into your account in order to activate a personal license. Once logged in, you can install the required version of Unity. Note that Unity Hub only provides download links for the latest versions, so you'll need to access [Unity Archive](https://unity.com/releases/editor/archive) to find the specific version you need. From the archive, you can click a button to open Unity Hub and begin the download.
 
@@ -69,6 +71,8 @@ ros2 launch unity_sim unity_sim.launch.py
 On first run, the project will take a while to start as it needs to download some packages from the web and import all the assets. However, future runs will be significantly faster. Unity may still take up to a dozen of seconds to start, so you can use the above command to run the simulation in a new terminal window, while you continue to restart other nodes separately.
 
 If you wish to upgrade the simulation to a newer version of Unity, please open it using Unity Hub. The project directory can be found [here](./unity_project/unity_sim) and will need to be manually selected in Unity Hub.
+
+When upgrading, keep **Project Settings -> Player -> Run In Background** enabled. Since Unity 6 the editor honors it in play mode and otherwise throttles the simulation to ~11 FPS whenever its window loses focus.
 
 ## IMU Simulation
 
@@ -98,7 +102,7 @@ This way you can easily get a list of earth-referenced waypoints that can be imp
 
 ## RealSense Cameras
 
-In Unity each RealSense is a prefab consisting of a single `GameObject` that contains a camera and a control script. The script renders the camera at a set rate and applies a shader that embeds depth information in the alpha channel of the image.
+In Unity each RealSense is a prefab consisting of a single `GameObject` that contains a camera and a control script. The script renders the camera at a set rate, and a Render Graph pass ([RealSenseCapturePass](./unity_project/unity_sim/Assets/Simulation/RealSense/RealSenseCapturePass.cs)) injected into that camera's render runs a shader that embeds depth information in the alpha channel of the image.
 
 When a frame is available, it is read by the script onto the CPU, and from there, [native C++ code](./unity_project/unity_rs_publisher_plugin/) sends the unmodified binary buffer over a Unix socket to a `unity_rs_publisher` ROS node.
 
