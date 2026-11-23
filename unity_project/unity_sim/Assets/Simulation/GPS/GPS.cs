@@ -78,7 +78,7 @@ public class GPS : MonoBehaviour
 
     internal void ScanBaseStations()
     {
-        baseStations = FindObjectsByType<GPSBaseStation>(FindObjectsSortMode.None);
+        baseStations = FindObjectsByType<GPSBaseStation>();
         if (baseStations.Length < 2)
         {
             Debug.LogWarning("There are not enough base stations to compute GPS coordinates. Please spawn at least 2 base stations.");
